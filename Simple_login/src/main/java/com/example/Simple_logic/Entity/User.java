@@ -40,6 +40,9 @@ public class User {
     @JsonIgnore 
     private String password;
 
+   @Column(name ="is_admin", columnDefinition = "boolean default false")
+    private Boolean isadmin = false;
+
     @ManyToMany
     @JoinTable(
         name = "article_read_by_user",

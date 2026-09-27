@@ -16,9 +16,11 @@ import com.example.Simple_logic.DTO.LoginResponse;
 import com.example.Simple_logic.Entity.Article;
 import com.example.Simple_logic.Entity.ArticleRepository;
 import com.example.Simple_logic.Entity.User;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
 @RestController
 @RequestMapping("/api")
+@CrossOrigin(origins = "http://localhost:5173")
 public class Api {
 
     public Api(AccountRepository accountRepository, ArticleRepository articleRepository) {
