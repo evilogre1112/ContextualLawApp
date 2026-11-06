@@ -22,16 +22,6 @@ public class Dieu extends ThanhPhan {
     @Property ("STT")
     private int stt;
 
-    @Property("Nội dung")
-    private String noiDung;
-
-    @Relationship (
-        type = "Thành phần thuộc Văn bản",
-        direction = Relationship.Direction.OUTGOING
-    )   
-    private VanBan vanBan;
-
-
     public void setChuong(Chuong chuong) {
         this.chuong = chuong;
     }
@@ -73,21 +63,6 @@ public class Dieu extends ThanhPhan {
         this.stt = stt;
     }
 
-    public String getNoiDung() {
-        return noiDung;
-    }
-
-    public void setNoiDung(String noiDung) {
-        this.noiDung = noiDung;
-    }
-
-    public VanBan getVanBan() {
-        return vanBan;
-    }
-
-    public void setVanBan(VanBan vanBan) {
-        this.vanBan = vanBan;
-    }
 
     public Chuong getChuong() {
         return chuong;

@@ -23,12 +23,7 @@ public class Chuong extends ThanhPhan{
     @Property ("STT")
     private int stt;
 
-    @Relationship (
-        type = "Thành phần thuộc Văn bản",
-        direction = Relationship.Direction.OUTGOING
-    )   
-    private VanBan vanBan;
-
+    
 
     public LocalDate getNgayBatDau() {
         return ngayBatDau;
@@ -54,13 +49,6 @@ public class Chuong extends ThanhPhan{
         this.stt = stt;
     }
 
-    public VanBan getVanBan() {
-        return vanBan;
-    }
-
-    public void setVanBan(VanBan vanBan) {
-        this.vanBan = vanBan;
-    }
 
     
 }

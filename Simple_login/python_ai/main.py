@@ -3,6 +3,8 @@ from pydantic import BaseModel
 from functools import lru_cache
 from ner_xlmr import router as ner_router
 from Gettp import GetThanhPhan
+from typing import Optional
+import traceback
 
 # Khởi tạo server FastAPI
 app = FastAPI()
@@ -18,18 +20,23 @@ def get_embedding_model():
 
 # Khai báo định dạng dữ liệu JSON mà Spring Boot sẽ gửi sang
 class TextRequest(BaseModel):
-    text: str
+    text: Optional[str] = None
+    noiDung: Optional[str] = None 
 
 # Tạo API nhận văn bản và trả về vector
 @app.post("/generate-embedding")
 async def generate_embedding(request: TextRequest):
-    # Đưa văn bản vào mô hình để tính toán ra vector
-    vector = get_embedding_model().encode(request.text)
-    # Chuyển đổi kết quả thành mảng (list) để có thể trả về dưới dạng JSON
+    # Nên thêm kiểm tra an toàn ở đây
+    input_text = request.text or request.noiDung or ""
+    vector = get_embedding_model().encode(input_text)
     return {
         "embedding": vector.tolist()
     }
+
 @app.post("/Gettp")
 def get_thanh_phan(request: TextRequest):
-    result = GetThanhPhan(request.text)
+    if(request.text):
+        result = GetThanhPhan(request.text)
+    else:
+        result = GetThanhPhan(request.noiDung)
     return result 

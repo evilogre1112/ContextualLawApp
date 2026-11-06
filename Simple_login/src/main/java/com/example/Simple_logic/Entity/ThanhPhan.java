@@ -1,10 +1,12 @@
 package com.example.Simple_logic.Entity;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
+import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
 @Node("Thành phần")
@@ -12,12 +14,23 @@ public abstract class ThanhPhan {
     @Id
     private String id;
 
+    @Property ("Nội dung")
+    private String NoiDung ;
+
     @Relationship ("Thành phần - Văn bản")
     private List<ThanhPhan_VanBan> thanhPhan_VanBans = new ArrayList<>() ;
 
     @Relationship ("Thành phần - Thành phần")
     private List<ThanhPhan_ThanhPhan> thanhPhan_ThanhPhans = new ArrayList<>() ;
 
+    @Property ("Loại thành phần")
+    private String loaithanhphan;
+
+    @Relationship (
+        type = "Thành phần thuộc Văn bản",
+        direction = Relationship.Direction.OUTGOING
+    )   
+    private VanBan vanBan;
     public String getId() {
         return id;
     }
@@ -42,5 +55,30 @@ public abstract class ThanhPhan {
         this.thanhPhan_ThanhPhans = thanhPhan_ThanhPhans;
     }
 
+    public String getNoiDung() {
+        return NoiDung;
+    }
+
+    public void setNoiDung(String noiDung) {
+        NoiDung = noiDung;
+    }
+
+    public VanBan getVanBan() {
+        return vanBan;
+    }
+
+    public void setVanBan(VanBan vanBan) {
+        this.vanBan = vanBan;
+    }
+
+    public String getLoaithanhphan() {
+        return loaithanhphan;
+    }
+
+    public void setLoaithanhphan(String loaithanhphan) {
+        this.loaithanhphan = loaithanhphan;
+    }
+
+    
     
 }

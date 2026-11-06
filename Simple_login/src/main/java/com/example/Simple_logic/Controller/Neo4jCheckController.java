@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Api;
+package com.example.Simple_logic.Controller;
 
 
 import org.springframework.web.bind.annotation.RestController;

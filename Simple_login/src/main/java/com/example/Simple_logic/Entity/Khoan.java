@@ -22,9 +22,6 @@ public class Khoan extends ThanhPhan {
     @Min(1)
     @Property("STT")
     private int stt;
-    
-    @Property("Nội dung")
-    private String noiDung;
 
     @Relationship(type = "Thành phần thuộc Văn bản", direction = Relationship.Direction.OUTGOING)
     private VanBan vanBan;
@@ -56,14 +53,6 @@ public class Khoan extends ThanhPhan {
 
     public void setStt(int stt) {
         this.stt = stt;
-    }
-
-    public String getNoiDung() {
-        return noiDung;
-    }
-
-    public void setNoiDung(String noiDung) {
-        this.noiDung = noiDung;
     }
 
     public VanBan getVanBan() {

@@ -13,7 +13,7 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
         String loaiNER
     );
 
-    default NER themNER(NER ner){
+    default NER add(NER ner){
         if(ner == null){
             throw new IllegalArgumentException("NER không được để trống");
         }

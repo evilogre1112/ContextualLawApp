@@ -22,17 +22,14 @@ public class Diem extends ThanhPhan {
     @Min(1)
     @Property("STT")
     private int stt;
-    
-    @Property("Nội dung")
-    private String noiDung;
-
-    @Relationship(type = "Thành phần thuộc Văn bản", direction = Relationship.Direction.OUTGOING)
-    private VanBan vanBan;
-
 
     @Relationship(type = "Thuộc Khoản", direction = Relationship.Direction.OUTGOING)
     private Khoan khoan;
 
+    
+
+    public Diem() {
+    }
 
     public LocalDate getNgayBatDau() {
         return ngayBatDau;
@@ -58,21 +55,6 @@ public class Diem extends ThanhPhan {
         this.stt = stt;
     }
 
-    public String getNoiDung() {
-        return noiDung;
-    }
-
-    public void setNoiDung(String noiDung) {
-        this.noiDung = noiDung;
-    }
-
-    public VanBan getVanBan() {
-        return vanBan;
-    }
-
-    public void setVanBan(VanBan vanBan) {
-        this.vanBan = vanBan;
-    }
 
     public Khoan getKhoan() {
         return khoan;
