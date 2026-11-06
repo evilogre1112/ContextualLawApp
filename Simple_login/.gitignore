@@ -31,3 +31,12 @@ build/
 
 ### VS Code ###
 .vscode/
+
+## Special 
+UpdateUseModelDoc/
+Testdata/
+python_ai/embedding/
+LinkThamKhao.txt
+src/main/resources/application.properties
+
+

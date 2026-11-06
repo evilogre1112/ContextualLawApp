@@ -1,0 +1,17 @@
+# FastAPI service and existing embedding endpoint.
+fastapi>=0.110,<1
+uvicorn>=0.27,<1
+sentence-transformers>=2.7,<6
+transformers>=4.40,<5
+pytorch-crf==0.7.2
+vncorenlp==1.0.3
+sentencepiece>=0.1.99,<1
+# The original vphoberttagger/__init__.py imports training modules eagerly,
+# even when API only calls ViTagger for inference.
+numpy>=1.24
+pandas>=1.5
+scikit-learn>=1.1
+tqdm>=4.64
+prettytable>=3.3
+tensorboardX>=2.5
+matplotlib>=3.5
