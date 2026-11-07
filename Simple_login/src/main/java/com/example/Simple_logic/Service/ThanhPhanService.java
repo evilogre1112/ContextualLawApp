@@ -1,12 +1,11 @@
 package com.example.Simple_logic.Service;
 
-import java.net.http.HttpClient;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -14,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import com.example.Simple_logic.Controller.NerController;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DAO.VanBanRepo;
+import com.example.Simple_logic.DTO.EmbeddingResponse;
 import com.example.Simple_logic.DTO.ThanhPhanRespone;
 import com.example.Simple_logic.Entity.Chuong;
 import com.example.Simple_logic.Entity.Diem;
@@ -24,7 +24,6 @@ import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
 import org.springframework.http.MediaType;
 
-import jakarta.transaction.Transactional;
 
 @Service 
 public class ThanhPhanService {
@@ -78,6 +77,15 @@ public class ThanhPhanService {
                 chuong.setVanBan(saved);
                 chuong.setNoiDung(newtp.getNoi_dung());
                 chuong.setLoaithanhphan(newtp.getLoai_thanh_phan());
+                EmbeddingResponse response = client.post()
+                                                    .uri("http://127.0.0.1:8000/generate-embedding")
+                                                    .body(Map.of("text", chuong.getNoiDung()))
+                                                    .retrieve()
+                                                    .body(EmbeddingResponse.class);
+
+                if (response != null) {
+                    chuong.setEmbedding(response.getEmbedding());
+                }
 
                 all.add(chuong);
 
@@ -104,6 +112,16 @@ public class ThanhPhanService {
                 muc.setNoiDung(newtp.getNoi_dung());
                 muc.setLoaithanhphan(newtp.getLoai_thanh_phan());
 
+                EmbeddingResponse response = client.post()
+                                                    .uri("http://127.0.0.1:8000/generate-embedding")
+                                                    .body(Map.of("text", muc.getNoiDung()))
+                                                    .retrieve()
+                                                    .body(EmbeddingResponse.class);
+
+                if (response != null) {
+                    muc.setEmbedding(response.getEmbedding());
+                }
+
                 all.add(muc);
 
                 dieu = null;
@@ -129,6 +147,16 @@ public class ThanhPhanService {
                 dieu.setNoiDung(newtp.getNoi_dung());
                 dieu.setLoaithanhphan(newtp.getLoai_thanh_phan());
 
+                EmbeddingResponse response = client.post()
+                                                    .uri("http://127.0.0.1:8000/generate-embedding")
+                                                    .body(Map.of("text", dieu.getNoiDung()))
+                                                    .retrieve()
+                                                    .body(EmbeddingResponse.class);
+
+                if (response != null) {
+                    dieu.setEmbedding(response.getEmbedding());
+                }
+
                 all.add(dieu);
 
                 khoan = null;
@@ -153,6 +181,16 @@ public class ThanhPhanService {
                 khoan.setNoiDung(newtp.getNoi_dung());
                 khoan.setLoaithanhphan(newtp.getLoai_thanh_phan());
 
+                EmbeddingResponse response = client.post()
+                                                    .uri("http://127.0.0.1:8000/generate-embedding")
+                                                    .body(Map.of("text", khoan.getNoiDung()))
+                                                    .retrieve()
+                                                    .body(EmbeddingResponse.class);
+
+                if (response != null) {
+                    khoan.setEmbedding(response.getEmbedding());
+                }
+
                 all.add(khoan);
 
                 diem = null;
@@ -175,6 +213,16 @@ public class ThanhPhanService {
                 diem.setVanBan(saved);
                 diem.setNoiDung(newtp.getNoi_dung());
                 diem.setLoaithanhphan(newtp.getLoai_thanh_phan());
+
+                EmbeddingResponse response = client.post()
+                                                    .uri("http://127.0.0.1:8000/generate-embedding")
+                                                    .body(Map.of("text", diem.getNoiDung()))
+                                                    .retrieve()
+                                                    .body(EmbeddingResponse.class);
+
+                if (response != null) {
+                    diem.setEmbedding(response.getEmbedding());
+                }
 
                 all.add(diem);
 

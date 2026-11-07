@@ -1,6 +1,5 @@
 package com.example.Simple_logic.Entity;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -8,6 +7,8 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
+
+import jakarta.validation.constraints.NotNull;
 
 @Node("Thành phần")
 public abstract class ThanhPhan {
@@ -25,6 +26,15 @@ public abstract class ThanhPhan {
 
     @Property ("Loại thành phần")
     private String loaithanhphan;
+
+    @Property("Embedding")
+    private List<Double> embedding;
+
+    @Relationship (
+        type = "Nhắc đến NER",
+        direction = Relationship.Direction.OUTGOING
+    )
+    private NER ner ;
 
     @Relationship (
         type = "Thành phần thuộc Văn bản",
@@ -79,6 +89,20 @@ public abstract class ThanhPhan {
         this.loaithanhphan = loaithanhphan;
     }
 
-    
+    public List<Double> getEmbedding() {
+        return embedding;
+    }
+
+    public void setEmbedding(List<Double> embedding) {
+        this.embedding = embedding;
+    }
+
+    public NER getNer() {
+        return ner;
+    }
+
+    public void setNer(NER ner) {
+        this.ner = ner;
+    }
     
 }
