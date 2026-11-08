@@ -8,7 +8,8 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 
 @Node("Thành phần")
 public abstract class ThanhPhan {
@@ -34,7 +35,7 @@ public abstract class ThanhPhan {
         type = "Nhắc đến NER",
         direction = Relationship.Direction.OUTGOING
     )
-    private NER ner ;
+    private List<NER> ners = new ArrayList<>();
 
     @Relationship (
         type = "Thành phần thuộc Văn bản",
@@ -89,6 +90,7 @@ public abstract class ThanhPhan {
         this.loaithanhphan = loaithanhphan;
     }
 
+    @JsonIgnore
     public List<Double> getEmbedding() {
         return embedding;
     }
@@ -97,12 +99,14 @@ public abstract class ThanhPhan {
         this.embedding = embedding;
     }
 
-    public NER getNer() {
-        return ner;
+    public List<NER> getNers() {
+        return ners;
     }
 
-    public void setNer(NER ner) {
-        this.ner = ner;
+    public void setNers(List<NER> ners) {
+        this.ners = ners;
     }
+
+    
     
 }

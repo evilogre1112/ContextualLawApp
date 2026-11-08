@@ -1,16 +1,19 @@
 package com.example.Simple_logic.Service;
 
-
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
 
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.data.neo4j.core.Neo4jTemplate;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import com.example.Simple_logic.Controller.NerController;
+
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.DTO.EmbeddingResponse;
@@ -20,8 +23,11 @@ import com.example.Simple_logic.Entity.Diem;
 import com.example.Simple_logic.Entity.Dieu;
 import com.example.Simple_logic.Entity.Khoan;
 import com.example.Simple_logic.Entity.Muc;
+import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
+import com.example.Simple_logic.Extention.Ttime;
+
 import org.springframework.http.MediaType;
 
 
@@ -29,12 +35,20 @@ import org.springframework.http.MediaType;
 public class ThanhPhanService {
     private final VanBanRepo vanBanRepo;
     private final ThanhPhanRepo thanhPhanRepo;
+    private final NERService nerService;
     private final RestClient client = RestClient.builder()
                                                 .requestFactory(new SimpleClientHttpRequestFactory())
                                                 .build();
-    public ThanhPhanService(VanBanRepo vanBanRepo,NerController nerController,ThanhPhanRepo thanhPhanRepo){
+    private final Neo4jTemplate neo4jTemplate;
+
+    public ThanhPhanService(VanBanRepo vanBanRepo,
+                            ThanhPhanRepo thanhPhanRepo,
+                            Neo4jTemplate neo4jTemplate,
+                            NERService nerService){
         this.vanBanRepo = vanBanRepo ;
         this.thanhPhanRepo = thanhPhanRepo;
+        this.neo4jTemplate = neo4jTemplate;
+        this.nerService = nerService;
     }
 
     public int create(String articleId){
@@ -47,6 +61,7 @@ public class ThanhPhanService {
         if (noiDung == null || noiDung.isBlank()) {
             throw new IllegalArgumentException("Nội dung văn bản đang bị trống");
         }
+        long start = System.nanoTime();
 
         List<ThanhPhanRespone> thanhphan = client.post()
                 .uri("http://127.0.0.1:8000/Gettp")
@@ -55,6 +70,7 @@ public class ThanhPhanService {
                 .retrieve()
                 .body(new ParameterizedTypeReference<List<ThanhPhanRespone>>() {});
         
+        Ttime.logTime("Tạo Thành Phần", start);
         if (thanhphan == null) {
             throw new RuntimeException("Python API không trả về dữ liệu");
         }
@@ -66,7 +82,7 @@ public class ThanhPhanService {
         Diem diem = null;
         List<ThanhPhan> all = new ArrayList<>();
         int total = 0;
-
+        start = System.nanoTime();
         for (ThanhPhanRespone newtp : thanhphan) {
 
             if ("Chương".equals(newtp.getLoai_thanh_phan())) {
@@ -77,15 +93,9 @@ public class ThanhPhanService {
                 chuong.setVanBan(saved);
                 chuong.setNoiDung(newtp.getNoi_dung());
                 chuong.setLoaithanhphan(newtp.getLoai_thanh_phan());
-                EmbeddingResponse response = client.post()
-                                                    .uri("http://127.0.0.1:8000/generate-embedding")
-                                                    .body(Map.of("text", chuong.getNoiDung()))
-                                                    .retrieve()
-                                                    .body(EmbeddingResponse.class);
-
-                if (response != null) {
-                    chuong.setEmbedding(response.getEmbedding());
-                }
+                chuong.setEmbedding(embed(chuong.getNoiDung()));
+                List<NER> ner = nerService.saveNer(chuong.getNoiDung());
+                chuong.setNers(ner);
 
                 all.add(chuong);
 
@@ -111,16 +121,9 @@ public class ThanhPhanService {
                 muc.setVanBan(saved);
                 muc.setNoiDung(newtp.getNoi_dung());
                 muc.setLoaithanhphan(newtp.getLoai_thanh_phan());
-
-                EmbeddingResponse response = client.post()
-                                                    .uri("http://127.0.0.1:8000/generate-embedding")
-                                                    .body(Map.of("text", muc.getNoiDung()))
-                                                    .retrieve()
-                                                    .body(EmbeddingResponse.class);
-
-                if (response != null) {
-                    muc.setEmbedding(response.getEmbedding());
-                }
+                muc.setEmbedding(embed(muc.getNoiDung()));
+                List<NER> ner = nerService.saveNer(muc.getNoiDung());
+                muc.setNers(ner);
 
                 all.add(muc);
 
@@ -146,16 +149,9 @@ public class ThanhPhanService {
                 dieu.setVanBan(saved);
                 dieu.setNoiDung(newtp.getNoi_dung());
                 dieu.setLoaithanhphan(newtp.getLoai_thanh_phan());
-
-                EmbeddingResponse response = client.post()
-                                                    .uri("http://127.0.0.1:8000/generate-embedding")
-                                                    .body(Map.of("text", dieu.getNoiDung()))
-                                                    .retrieve()
-                                                    .body(EmbeddingResponse.class);
-
-                if (response != null) {
-                    dieu.setEmbedding(response.getEmbedding());
-                }
+                dieu.setEmbedding(embed(dieu.getNoiDung()));
+                List<NER> ner = nerService.saveNer(dieu.getNoiDung());
+                dieu.setNers(ner);
 
                 all.add(dieu);
 
@@ -180,16 +176,9 @@ public class ThanhPhanService {
                 khoan.setVanBan(saved);
                 khoan.setNoiDung(newtp.getNoi_dung());
                 khoan.setLoaithanhphan(newtp.getLoai_thanh_phan());
-
-                EmbeddingResponse response = client.post()
-                                                    .uri("http://127.0.0.1:8000/generate-embedding")
-                                                    .body(Map.of("text", khoan.getNoiDung()))
-                                                    .retrieve()
-                                                    .body(EmbeddingResponse.class);
-
-                if (response != null) {
-                    khoan.setEmbedding(response.getEmbedding());
-                }
+                khoan.setEmbedding(embed(khoan.getNoiDung()));
+                List<NER> ner = nerService.saveNer(khoan.getNoiDung());
+                khoan.setNers(ner);
 
                 all.add(khoan);
 
@@ -213,24 +202,72 @@ public class ThanhPhanService {
                 diem.setVanBan(saved);
                 diem.setNoiDung(newtp.getNoi_dung());
                 diem.setLoaithanhphan(newtp.getLoai_thanh_phan());
-
-                EmbeddingResponse response = client.post()
-                                                    .uri("http://127.0.0.1:8000/generate-embedding")
-                                                    .body(Map.of("text", diem.getNoiDung()))
-                                                    .retrieve()
-                                                    .body(EmbeddingResponse.class);
-
-                if (response != null) {
-                    diem.setEmbedding(response.getEmbedding());
-                }
+                diem.setEmbedding(embed(diem.getNoiDung()));
+                List<NER> ner = nerService.saveNer(diem.getNoiDung());
+                diem.setNers(ner);
 
                 all.add(diem);
 
                 total++;
             }
         }
+        Ttime.logTime("Lưu thành phần trước khi saveall", start);
+        start = System.nanoTime();
         thanhPhanRepo.saveAll(all);
+        Ttime.logTime("Lưu thành phần sau khi saveall", start);
         return total;
     }
 
+    private List<Double> embed(String text) {
+        if (text == null || text.isBlank()) {
+            return null;   
+        }
+        long start = System.nanoTime();
+        EmbeddingResponse response = client.post()
+                .uri("http://127.0.0.1:8000/generate-embedding")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("text", text))
+                .retrieve()
+                .body(EmbeddingResponse.class);
+        Ttime.logTime("Tạo embedding", start);
+        return response != null ? response.getEmbedding() : null;
+    }
+
+
+    public List<ThanhPhan> search(String query, int k) {
+        List<Double> embedding = embed(query);
+        if (embedding == null) {
+            throw new IllegalStateException("Không tạo được embedding cho truy vấn");
+        }
+
+        String cypher = """
+                CALL db.index.vector.queryNodes('thanh_phan_embedding', $soUngVien, $q)
+                YIELD node, score
+                WHERE score >= 0.75
+                RETURN node
+                ORDER BY score DESC
+                """;
+        List<ThanhPhan> raw = neo4jTemplate.findAll(
+                                                    cypher,
+                                                    Map.of("soUngVien", Math.max(k * 5, 30), "q", embedding),
+                                                    ThanhPhan.class
+                                                );
+        Set<String> daThay = new HashSet<>();
+        List<ThanhPhan> ketQua = new ArrayList<>();
+        for (ThanhPhan tp : raw) {
+            if (daThay.add(chuanHoa(tp.getNoiDung()))) {
+                ketQua.add(tp);
+                if (ketQua.size() == k) break;
+            }
+        }
+        return ketQua;
+    }
+
+    private String chuanHoa(String s) {
+        if (s == null) return "";
+        return s.strip()
+                .replaceFirst("^(\\d+\\.|\\p{L}\\))\\s*", "")
+                .strip()
+                .toLowerCase();
+    }
 }

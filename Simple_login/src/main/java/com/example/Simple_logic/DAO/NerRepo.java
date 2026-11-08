@@ -4,7 +4,6 @@ import org.springframework.data.neo4j.repository.Neo4jRepository;
 import com.example.Simple_logic.Entity.NER;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface NerRepo extends Neo4jRepository<NER, String> {
 
@@ -35,8 +34,6 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
 
         ner.setTenNER(tenNER);
         ner.setLoaiNER(loaiNER);
-
-        if (ner.getId() == null  || ner.getId().isBlank())ner.setId(UUID.randomUUID().toString());
 
         return save(ner);
     }

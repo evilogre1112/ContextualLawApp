@@ -5,7 +5,6 @@ import java.time.LocalDate;
 
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
-import org.springframework.data.neo4j.core.schema.Relationship;
 
 import jakarta.validation.constraints.Min;
 

@@ -1,18 +1,15 @@
 package com.example.Simple_logic.Controller;
 
 import java.net.URI;
-import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Service.VanBanService;
 
-import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 
 
 import com.example.Simple_logic.DTO.CreateArticleRequest;
