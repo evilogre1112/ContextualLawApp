@@ -12,7 +12,7 @@ import com.example.Simple_logic.DAO.NerRepo;
 import com.example.Simple_logic.DTO.NEREntityResponse;
 import com.example.Simple_logic.DTO.NERResponse;
 import com.example.Simple_logic.Entity.NER;
-import com.example.Simple_logic.Extention.Ttime;
+import com.example.Simple_logic.Extention.*;
 
 import jakarta.transaction.Transactional;
 
@@ -58,7 +58,7 @@ public class NERService {
                                     .map(item -> nerRepo.add(new NER(
                                         null,
                                         item.label(),
-                                        item.text()
+                                        Normalize.normalizeName(item.text())
                                     ))).toList();
          Ttime.logTime("Lưu NER", start);
         return  entities;
