@@ -6,8 +6,6 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import jakarta.validation.constraints.Min;
-
 
 @Node (primaryLabel = "Điều", labels = {"Thành phần"})
 public class Dieu extends ThanhPhan {
@@ -17,10 +15,6 @@ public class Dieu extends ThanhPhan {
 
     @Property ("Ngày kết thúc")
     private LocalDate ngayKetThuc ;
-
-    @Min(1)
-    @Property ("STT")
-    private int stt;
 
     public void setChuong(Chuong chuong) {
         this.chuong = chuong;
@@ -53,14 +47,6 @@ public class Dieu extends ThanhPhan {
 
     public void setNgayKetThuc(LocalDate ngayKetThuc) {
         this.ngayKetThuc = ngayKetThuc;
-    }
-
-    public int getStt() {
-        return stt;
-    }
-
-    public void setStt(int stt) {
-        this.stt = stt;
     }
 
 

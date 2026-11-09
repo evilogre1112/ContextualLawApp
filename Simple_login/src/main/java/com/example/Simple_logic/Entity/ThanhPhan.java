@@ -10,6 +10,8 @@ import org.springframework.data.neo4j.core.schema.Relationship;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+import jakarta.validation.constraints.Min;
+
 
 @Node("Thành phần")
 public abstract class ThanhPhan {
@@ -18,6 +20,10 @@ public abstract class ThanhPhan {
 
     @Property ("Nội dung")
     private String NoiDung ;
+    
+    @Min(1)
+    @Property ("STT")
+    private int stt;
 
     @Relationship ("Thành phần - Văn bản")
     private List<ThanhPhan_VanBan> thanhPhan_VanBans = new ArrayList<>() ;
@@ -117,6 +123,14 @@ public abstract class ThanhPhan {
     
     public void setEmbeddingGoc(List<Double> embeddingGoc) {
         this.embeddingGoc = embeddingGoc;
+    }
+
+    public int getStt() {
+        return stt;
+    }
+
+    public void setStt(int stt) {
+        this.stt = stt;
     }
 
     

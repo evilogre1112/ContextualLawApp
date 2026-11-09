@@ -8,9 +8,12 @@ We intentionally DO NOT reimplement any of those steps here.
 import importlib
 import logging
 import os
+from pydantic import BaseModel
 import sys
 from pathlib import Path
 from threading import Lock
+from embedding_model import get_embedding_model
+from typing import List
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
@@ -33,6 +36,9 @@ class NerSetupError(RuntimeError):
 class NerRequest(BaseModel):
     text: str = Field(min_length=1)
 
+
+class BatchEmbeddingRequest(BaseModel):
+    texts: List[str]
 
 def _paths():
     root = Path(os.environ.get("LEGAL_NER_TRAIN_ROOT") or DEFAULT_TRAIN_ROOT).expanduser().resolve()
@@ -199,3 +205,22 @@ def extract_entities(request: NerRequest):
     except NerSetupError as exc:
         logger.exception("Không thể khởi tạo native NER predictor")
         raise HTTPException(status_code=503, detail=str(exc)) from exc
+
+@router.post("/embed/batch")
+def embed_batch(request: BatchEmbeddingRequest):
+    if not request.texts:
+        return []
+    try:
+        model = get_embedding_model()
+        embeddings = model.encode(
+            request.texts,
+            batch_size = 32,
+            convert_to_numpy = True,
+            normalize_embeddings = True 
+        )
+        return embeddings.tolist()
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Không thể tạo batch embedding: {str(e)}"
+        )

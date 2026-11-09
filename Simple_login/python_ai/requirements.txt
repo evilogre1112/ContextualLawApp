@@ -1,4 +1,5 @@
 # FastAPI service and existing embedding endpoint.
+pyvi>=0.1.1
 fastapi>=0.110,<1
 uvicorn>=0.27,<1
 sentence-transformers>=2.7,<6

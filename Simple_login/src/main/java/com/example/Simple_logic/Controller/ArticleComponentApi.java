@@ -43,21 +43,17 @@ public class ArticleComponentApi {
     @PostMapping("/merge-embedding")
     public ResponseEntity<?> mergeEmbedding() {
         try {
-            thanhPhanService.merEmndeThanhPhan();
+            thanhPhanService.merEmbThanhPhanWithNER();
+            thanhPhanService.merEmbThanhPhanWithNCon();
+            thanhPhanService.luuEmbeddingCuoiCung();
 
             return ResponseEntity.ok(
-                Map.of(
-                    "message", "Trộn embedding thành phần và NER thành công"
-                )
+                Map.of("message", "Merge embedding thành công")
             );
 
         } catch (RuntimeException e) {
-            String message = e.getMessage() == null
-                ? e.getClass().getSimpleName()
-                : e.getMessage();
-
             return ResponseEntity.internalServerError()
-                .body(Map.of("error", message));
+                .body(Map.of("error", e.getMessage()));
         }
     }
 }

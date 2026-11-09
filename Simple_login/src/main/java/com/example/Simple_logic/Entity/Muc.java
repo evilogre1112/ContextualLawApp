@@ -6,7 +6,6 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
 import org.springframework.data.neo4j.core.schema.Relationship;
 
-import jakarta.validation.constraints.Min;
 
 
 @Node (primaryLabel = "Mục", labels = {"Thành phần"})
@@ -17,10 +16,6 @@ public class Muc extends ThanhPhan {
 
     @Property ("Ngày kết thúc")
     private LocalDate ngayKetThuc ;
-
-    @Min(1)
-    @Property ("STT")
-    private int stt;
 
     @Relationship (
         type = "Thành phần thuộc Văn bản",
@@ -55,15 +50,6 @@ public class Muc extends ThanhPhan {
     public void setNgayKetThuc(LocalDate ngayKetThuc) {
         this.ngayKetThuc = ngayKetThuc;
     }
-
-    public int getStt() {
-        return stt;
-    }
-
-    public void setStt(int stt) {
-        this.stt = stt;
-    }
-
 
     public VanBan getVanBan() {
         return vanBan;

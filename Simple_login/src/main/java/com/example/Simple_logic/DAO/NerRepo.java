@@ -1,8 +1,11 @@
 package com.example.Simple_logic.DAO;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+import org.springframework.data.neo4j.repository.query.Query;
 
+import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface NerRepo extends Neo4jRepository<NER, String> {
@@ -37,4 +40,12 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
 
         return save(ner);
     }
+
+    @Query ("""
+            MATCH (t:`Thành phần`)-[:`Nhắc đến NER`]->(n:`NER`)
+            WHERE n.`Tên NER` IS NOT NULL
+            AND trim(n.`Tên NER`) <> ''
+            RETURN DISTINCT t.id AS tpId, n.`Tên NER` AS ten
+    """)
+    List<QuanHe> layTatCaNERThuocTP(); 
 }
