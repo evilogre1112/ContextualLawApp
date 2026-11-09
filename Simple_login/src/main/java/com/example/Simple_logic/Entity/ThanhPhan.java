@@ -37,6 +37,9 @@ public abstract class ThanhPhan {
     )
     private List<NER> ners = new ArrayList<>();
 
+    @Property ("EmbeddingGoc")
+    private List<Double> embeddingGoc;
+
     @Relationship (
         type = "Thành phần thuộc Văn bản",
         direction = Relationship.Direction.OUTGOING
@@ -105,6 +108,15 @@ public abstract class ThanhPhan {
 
     public void setNers(List<NER> ners) {
         this.ners = ners;
+    }
+
+    @JsonIgnore
+    public List<Double> getEmbeddingGoc() {
+        return embeddingGoc;
+    }
+    
+    public void setEmbeddingGoc(List<Double> embeddingGoc) {
+        this.embeddingGoc = embeddingGoc;
     }
 
     

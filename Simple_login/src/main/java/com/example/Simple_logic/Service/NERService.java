@@ -28,7 +28,7 @@ public class NERService {
         this.nerRepo = nerRepo;
     }
     
-    private List<NEREntityResponse> exNer(String text) {
+    public  List<NEREntityResponse> exNer(String text) {
         if (text == null || text.isBlank()) {
             return null;   
         }
