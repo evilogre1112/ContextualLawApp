@@ -48,7 +48,6 @@ public class ThanhPhanService {
     private final Map<String, List<Double>> embeddingTam = new HashMap<>();
     private final Map<String, Double> trongSoTPConTam = new HashMap<>();
 
-
     public ThanhPhanService(VanBanRepo vanBanRepo,
             ThanhPhanRepo thanhPhanRepo,
             Neo4jTemplate neo4jTemplate,
@@ -60,7 +59,8 @@ public class ThanhPhanService {
         this.nerService = nerService;
         this.nerRepo = nerRepo;
     }
-    private void Init(ThanhPhan tp,VanBan vanBan,ThanhPhanRespone response, String id) {
+
+    private void Init(ThanhPhan tp, VanBan vanBan, ThanhPhanRespone response, String id) {
         tp.setId(id);
         tp.setStt(response.getStt());
         tp.setVanBan(vanBan);
@@ -72,6 +72,7 @@ public class ThanhPhanService {
         List<NER> ner = nerService.saveNer(tp.getNoiDung());
         tp.setNers(ner);
     }
+
     public int create(String articleId) {
         VanBan saved = vanBanRepo.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy văn bản"));
@@ -89,7 +90,8 @@ public class ThanhPhanService {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("text", noiDung))
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<ThanhPhanRespone>>() {});
+                .body(new ParameterizedTypeReference<List<ThanhPhanRespone>>() {
+                });
 
         Ttime.logTime("Tạo Thành Phần", start);
 
@@ -230,8 +232,7 @@ public class ThanhPhanService {
         return response != null ? response.getEmbedding() : null;
     }
 
-
-    private static final double NGUONG_SEARCH = 0.5;
+    private static final double NGUONG_SEARCH = 0.4;
 
     public List<ThanhPhan> search(String query, int k) {
 
@@ -239,8 +240,7 @@ public class ThanhPhanService {
 
         if (embeddingGoc == null) {
             throw new IllegalStateException(
-                "Không tạo được embedding cho truy vấn"
-            );
+                    "Không tạo được embedding cho truy vấn");
         }
 
         List<Double> embeddingTimKiem = embeddingGoc;
@@ -253,16 +253,14 @@ public class ThanhPhanService {
             }
         } catch (Exception e) {
             System.err.println(
-                "Bỏ qua NER của câu hỏi: " + e.getMessage()
-            );
+                    "Bỏ qua NER của câu hỏi: " + e.getMessage());
         }
 
         int soUngVien = Math.max(k * 10, 100);
 
-
         Map<String, ThanhPhan> ungVien = new LinkedHashMap<>();
 
-        List<ThanhPhan> dsEmbedding = thanhPhanRepo.findEmbedding(embeddingTimKiem,soUngVien);
+        List<ThanhPhan> dsEmbedding = thanhPhanRepo.findEmbedding(embeddingTimKiem, soUngVien);
 
         List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingGoc, soUngVien);
 
@@ -275,7 +273,7 @@ public class ThanhPhanService {
             ungVien.put(tp.getId(), tp);
         }
 
-        // Chấm điểm lại 
+        // Chấm điểm lại
         List<Map.Entry<ThanhPhan, Double>> ketQua = new ArrayList<>();
 
         for (ThanhPhan tp : ungVien.values()) {
@@ -287,11 +285,11 @@ public class ThanhPhanService {
             double scoreTongHop = -1;
 
             if (goc != null) {
-                scoreGoc = CosineVec.cosineSimilarity(embeddingGoc, goc);
+                scoreGoc = Vvec.cosineSimilarity(embeddingGoc, goc);
             }
 
             if (tongHop != null) {
-                scoreTongHop = CosineVec.cosineSimilarity(embeddingTimKiem, tongHop);
+                scoreTongHop = Vvec.cosineSimilarity(embeddingTimKiem, tongHop);
             }
 
             double score = Math.max(scoreGoc, scoreTongHop);
@@ -303,10 +301,9 @@ public class ThanhPhanService {
 
         // Sắp xếp theo điểm tương đồng
         ketQua.sort(
-            Map.Entry.<ThanhPhan, Double>comparingByValue().reversed()
-        );
+                Map.Entry.<ThanhPhan, Double>comparingByValue().reversed());
 
-        //  Loại bỏ nội dung trùng nhau
+        // Loại bỏ nội dung trùng nhau
         Set<String> daThay = new HashSet<>();
         List<ThanhPhan> danhSach = new ArrayList<>();
 
@@ -330,29 +327,30 @@ public class ThanhPhanService {
 
     private List<List<Double>> embedCoCache(List<String> tenNers) {
         List<String> chuaCoCache = tenNers.stream()
-                                        .filter(ten -> !embeddingCache.containsKey(ten))
-                                        .distinct()
-                                        .toList();
-        if(!chuaCoCache.isEmpty()){
+                .filter(ten -> !embeddingCache.containsKey(ten))
+                .distinct()
+                .toList();
+        if (!chuaCoCache.isEmpty()) {
             List<List<Double>> embeddings = embedBatch(chuaCoCache);
-            if(embeddings == null || embeddings.size() != chuaCoCache.size()){
-                 throw new IllegalStateException("Số lượng embedding trả về không khớp số lượng NER");
+            if (embeddings == null || embeddings.size() != chuaCoCache.size()) {
+                throw new IllegalStateException("Số lượng embedding trả về không khớp số lượng NER");
             }
-            for(int i = 0; i < chuaCoCache.size();i++){
-                embeddingCache.put(chuaCoCache.get(i),embeddings.get(i));
+            for (int i = 0; i < chuaCoCache.size(); i++) {
+                embeddingCache.put(chuaCoCache.get(i), embeddings.get(i));
             }
         }
         return tenNers.stream()
-                        .map(embeddingCache::get)
-                        .toList();
+                .map(embeddingCache::get)
+                .toList();
     }
 
     private List<List<Double>> embedBatch(List<String> texts) {
         List<List<Double>> result = client.post()
-                                    .uri("http://127.0.0.1:8000/embed/batch")
-                                    .body(Map.of("texts", texts))
-                                    .retrieve()
-                                    .body(new ParameterizedTypeReference<List<List<Double>>>() {});
+                .uri("http://127.0.0.1:8000/embed/batch")
+                .body(Map.of("texts", texts))
+                .retrieve()
+                .body(new ParameterizedTypeReference<List<List<Double>>>() {
+                });
 
         if (result == null) {
             throw new IllegalStateException("Python không trả về embedding");
@@ -371,7 +369,7 @@ public class ThanhPhanService {
         List<List<Double>> dsEmbedding = embedCoCache(ds);
 
         double[] tb = new double[768];
-        for (int j = 0 ; j < dsEmbedding.size() ;j++) {
+        for (int j = 0; j < dsEmbedding.size(); j++) {
             List<Double> e = dsEmbedding.get(j);
             String ten = ds.get(j);
             double n = 0;
@@ -386,17 +384,7 @@ public class ThanhPhanService {
             }
         }
 
-        double norm = 0;
-        for (double x : tb)
-            norm += x * x;
-        norm = Math.sqrt(norm);
-        if (norm == 0) {
-            throw new IllegalStateException("Vector NER trung bình có độ dài 0");
-        }
-        List<Double> kq = new ArrayList<>(768);
-        for (double x : tb)
-            kq.add(x / norm);
-        return kq;
+        return Vvec.ChuanHoaVec(tb);
     }
 
     private List<Double> getEmbedNERInText(String text) {
@@ -436,25 +424,7 @@ public class ThanhPhanService {
             return null;
         }
 
-        double norm = 0;
-
-        for (double x : tong) {
-            norm += x * x;
-        }
-
-        norm = Math.sqrt(norm);
-
-        if (norm == 0) {
-            return null;
-        }
-
-        List<Double> kq = new ArrayList<>(n);
-
-        for (double x : tong) {
-            kq.add(x / norm);
-        }
-
-        return kq;
+        return Vvec.ChuanHoaVec(tong);
     }
 
     private Map<String, List<String>> layTatCaTPCon() {
@@ -464,7 +434,7 @@ public class ThanhPhanService {
 
         for (QuanHe row : rows) {
             ketQua.computeIfAbsent(row.tpId(), k -> new ArrayList<>())
-                .add(row.ten());
+                    .add(row.ten());
         }
 
         return ketQua;
@@ -489,7 +459,6 @@ public class ThanhPhanService {
         Map<String, List<String>> danhSachNER = layTatCaNER();
         embeddingTam.clear();
         trongSoTPConTam.clear();
-
 
         List<ThanhPhan> dsTp = thanhPhanRepo.getThanhPhanCoEmb();
 
@@ -555,8 +524,6 @@ public class ThanhPhanService {
 
         for (String loai : thuTu) {
 
-           
-
             List<ThanhPhan> dsTp = thanhPhanRepo.getThanhPhanTheoLoai(loai);
 
             int soLuong = 0;
@@ -594,9 +561,7 @@ public class ThanhPhanService {
                     soLuong++;
 
                 } catch (Exception e) {
-                    System.err.println(
-                            "Lỗi trộn con cho " + tp.getId()
-                                    + ": " + e.getMessage());
+                    System.err.println("Lỗi trộn con cho " + tp.getId() + ": " + e.getMessage());
                 }
             }
 
@@ -612,23 +577,8 @@ public class ThanhPhanService {
             try {
                 List<Double> vector = entry.getValue();
 
-                double norm = 0;
-
-                for (double x : vector) {
-                    norm += x * x;
-                }
-
-                norm = Math.sqrt(norm);
-
-                if (norm == 0) {
-                    throw new IllegalStateException("Vector có độ dài 0");
-                }
-
-                List<Double> embeddingFinal = new ArrayList<>(vector.size());
-
-                for (double x : vector) {
-                    embeddingFinal.add(x / norm);
-                }
+                List<Double> embeddingFinal = Vvec
+                        .ChuanHoaVec(vector.stream().mapToDouble(Double::doubleValue).toArray());
 
                 rows.add(Map.of(
                         "id", entry.getKey(),
@@ -648,10 +598,11 @@ public class ThanhPhanService {
                 "Đã lưu " + rows.size() + " embedding cuối cùng.");
     }
 
-    private static final double A0 = 0.23; // trọng số vector thành phần sử dụng cho thành phần
-    private static final double A1 = 0.58; // trọng số của vector tp con sử dụng cho thành phần
+    private static final double A0 = 0.55; // Trọng số vector thành phần gốc (giữ nét đặc trưng cốt lõi)
+    private static final double A1 = 0.30; // Trọng số vector thành phần con (đóng góp ngữ cảnh bottom-up)
+    // Trọng số NER = 1.0 - A0 - A1 = 0.15 (thực thể pháp lý)
 
-    private static final double B0 = 0.55; // Sử dụng cho truy vấn
+    private static final double B0 = 0.80; // Trọng số câu truy vấn gốc (80% câu hỏi, 20% NER bổ trợ)
 
     private List<Double> tronSerch(List<Double> thanhPhan, List<Double> ner) {
         double tong = 1.0 - B0;
@@ -664,21 +615,7 @@ public class ThanhPhanService {
             cong(v, ner, tong);
         }
 
-        double norm = 0;
-        for (double x : v)
-            norm += x * x;
-        norm = Math.sqrt(norm);
-
-        if (norm == 0) {
-            throw new IllegalStateException("Vector kết quả có độ dài 0");
-        }
-
-        List<Double> kq = new ArrayList<>(v.length);
-        for (double x : v) {
-            kq.add(x / norm);
-        }
-
-        return kq;
+        return Vvec.ChuanHoaVec(v);
     }
 
     /** v += w * (u / |u|) */
@@ -701,4 +638,5 @@ public class ThanhPhanService {
             v[i] += w * u.get(i) / norm;
         }
     }
+
 }

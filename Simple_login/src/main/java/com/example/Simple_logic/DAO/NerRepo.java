@@ -48,4 +48,6 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
             RETURN DISTINCT t.id AS tpId, n.`Tên NER` AS ten
     """)
     List<QuanHe> layTatCaNERThuocTP(); 
+
+
 }

@@ -1,8 +1,9 @@
 package com.example.Simple_logic.Extention;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public class CosineVec {
+public class Vvec {
         public static double cosineSimilarity(List<Double> a,List<Double> b) {
             if (a.size() != b.size()) {
                 throw new IllegalStateException(
@@ -29,4 +30,19 @@ public class CosineVec {
 
             return tichVoHuong / (Math.sqrt(normA) * Math.sqrt(normB));
         }
+    public static List<Double> ChuanHoaVec(double [] v){
+        double norm = 0;
+        for (double x : v)
+            norm += x * x;
+        norm = Math.sqrt(norm);
+
+        if (norm == 0) {
+            throw new IllegalStateException("Vector kết quả có độ dài 0");
+        }
+        List<Double> kq = new ArrayList<>(v.length);
+        for (double x : v) {
+            kq.add(x / norm);
+        }
+        return kq ;
+    }
 }

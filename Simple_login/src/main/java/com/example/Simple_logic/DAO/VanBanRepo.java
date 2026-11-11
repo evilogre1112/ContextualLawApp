@@ -2,6 +2,7 @@ package com.example.Simple_logic.DAO;
 
 import com.example.Simple_logic.Entity.VanBan;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
+
 import java.util.UUID;
 
 
@@ -25,4 +26,5 @@ public interface VanBanRepo extends Neo4jRepository<VanBan, String> {
         }
         return save(vanBan);
     }
+
 }
