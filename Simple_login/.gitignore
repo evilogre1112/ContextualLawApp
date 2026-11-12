@@ -38,6 +38,6 @@ Testdata/
 python_ai/embedding/
 LinkThamKhao.txt
 src/main/resources/application.properties
-
+python_ai/logs/
 
 

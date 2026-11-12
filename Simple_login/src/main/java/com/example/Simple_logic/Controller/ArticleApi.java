@@ -1,7 +1,5 @@
 package com.example.Simple_logic.Controller;
 
-import java.net.URI;
-import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Service.VanBanService;
 
 import jakarta.validation.Valid;
@@ -29,9 +27,7 @@ public class ArticleApi
     @PostMapping
     public ResponseEntity<?> addArticle(@Valid @RequestBody CreateArticleRequest request ){
 
-        VanBan saved =  vanBanService.create(request);
-        
-        return ResponseEntity.created(URI.create("/api/Article/" + saved.getId())).body(saved);
+        return vanBanService.create(request);
     }
 
     

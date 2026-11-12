@@ -300,8 +300,7 @@ public class ThanhPhanService {
         }
 
         // Sắp xếp theo điểm tương đồng
-        ketQua.sort(
-                Map.Entry.<ThanhPhan, Double>comparingByValue().reversed());
+        ketQua.sort(Map.Entry.<ThanhPhan, Double>comparingByValue().reversed());
 
         // Loại bỏ nội dung trùng nhau
         Set<String> daThay = new HashSet<>();

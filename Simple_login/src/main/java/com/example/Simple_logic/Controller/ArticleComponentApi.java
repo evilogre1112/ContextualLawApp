@@ -24,7 +24,7 @@ public class ArticleComponentApi {
     }
     
     @PostMapping("/{id}/components")
-    public ResponseEntity<?> createComponet(@PathVariable String id) {
+    public ResponseEntity<?> createComponent(@PathVariable String id) {
         try {
             int total = thanhPhanService.create(id);
             return ResponseEntity.ok(
