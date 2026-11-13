@@ -20,6 +20,7 @@ import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.DTO.EmbeddingResponse;
 import com.example.Simple_logic.DTO.NEREntityResponse;
+import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.DTO.ThanhPhanRespone;
 import com.example.Simple_logic.Entity.Chuong;
@@ -31,6 +32,8 @@ import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Extention.*;
+
+import jakarta.annotation.PostConstruct;
 
 import org.springframework.http.MediaType;
 import org.springframework.data.neo4j.core.Neo4jClient;
@@ -47,6 +50,7 @@ public class ThanhPhanService {
 
     private final Map<String, List<Double>> embeddingTam = new HashMap<>();
     private final Map<String, Double> trongSoTPConTam = new HashMap<>();
+    Map<String, List<String>> danhSachCon ;
 
     public ThanhPhanService(VanBanRepo vanBanRepo,
             ThanhPhanRepo thanhPhanRepo,
@@ -58,6 +62,11 @@ public class ThanhPhanService {
         this.thanhPhanRepo = thanhPhanRepo;
         this.nerService = nerService;
         this.nerRepo = nerRepo;
+    }
+
+    @PostConstruct
+    public void init() {
+        this.danhSachCon = layTatCaTPCon();
     }
 
     private void Init(ThanhPhan tp, VanBan vanBan, ThanhPhanRespone response, String id) {
@@ -151,19 +160,23 @@ public class ThanhPhanService {
                 case "Điều" -> {
                     dieu = new Dieu();
 
-                    String parentId = (muc != null)
-                            ? muc.getId()
-                            : (chuong != null ? chuong.getId() : saved.getId());
+                    String parentId;
+                    if (muc != null) {
+                        parentId = muc.getId();
+                        dieu.setMuc(muc);
+                    } else if (chuong != null) {
+                        parentId = chuong.getId();
+                        dieu.setChuong(chuong);
+                    } else {
+                        parentId = saved.getId();
+                        dieu.setVanBan(saved);
+                    }
 
                     String id = parentId + "/D" + stt;
 
                     Init(dieu, saved, newtp, id);
 
-                    dieu.setMuc(muc);
-                    dieu.setChuong(chuong);
-
                     all.add(dieu);
-
                     khoan = null;
                 }
 
@@ -230,6 +243,25 @@ public class ThanhPhanService {
                 .body(EmbeddingResponse.class);
         Ttime.logTime("Tạo embedding", start);
         return response != null ? response.getEmbedding() : null;
+    }
+
+    private List<Integer> Rranking(List<Point> p) {
+        if (p == null || p.isEmpty()) {
+            return List.of();
+        }
+        List<List<Double>> listPoints = p.stream().map(point -> List.of(point.x(), point.y(), point.z())).toList();
+        long start = System.nanoTime();
+         Map<String, Object> requestBody = Map.of(
+            "ListPoints", listPoints
+        );
+         Map<String, List<Integer>> response = client.post()
+                .uri("http://127.0.0.1:8000/Rranking")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(requestBody)
+                .retrieve()
+                .body(new ParameterizedTypeReference<Map<String, List<Integer>>>() {});
+        Ttime.logTime("Xếp hạng", start);
+        return response != null ? response.get("Ranking") : List.of();
     }
 
     private static final double NGUONG_SEARCH = 0.4;
@@ -320,6 +352,87 @@ public class ThanhPhanService {
         }
 
         return danhSach;
+    }
+    
+    public List<ThanhPhan> search2(String query,int k){
+        List<Double> embeddingGoc = embed(query);
+
+        if (embeddingGoc == null) {
+            throw new IllegalStateException(
+                    "Không tạo được embedding cho truy vấn");
+        }
+
+        List<Double> embeddingTimKiem = embeddingGoc;
+
+        try {
+            List<Double> vectorner = getEmbedNERInText(query);
+
+            if (vectorner != null) {
+                embeddingTimKiem = tronSerch(embeddingGoc, vectorner);
+            }
+        } catch (Exception e) {
+            System.err.println(
+                    "Bỏ qua NER của câu hỏi: " + e.getMessage());
+        }
+        int soUngVien = Math.max(k * 10, 100);
+
+        List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingGoc, soUngVien,0.65);
+        List<Point> dsRank = new ArrayList<>();
+        Map<String, ThanhPhan> parentCache = new HashMap<>();
+        for(ThanhPhan tp : dsEmbeddingGoc){
+            double scoreThis = Vvec.cosineSimilarity(tp.getEmbedding(), embeddingTimKiem);
+            ThanhPhan parent = thanhPhanRepo.getParent(tp.getId());     
+            parentCache.put(tp.getId(), parent);
+
+            double scoreParent = 0;
+            if (parent != null && parent.getEmbedding() != null) {
+                scoreParent = Vvec.cosineSimilarity(
+                    parent.getEmbedding(), embeddingTimKiem
+                );
+            }
+            List<Double> tBTPCon = getTrungBinhTPConEmbed(tp, danhSachCon);
+            double scoreChild = 0;
+            if (tBTPCon != null) {
+                scoreChild = Vvec.cosineSimilarity(tBTPCon, embeddingTimKiem);
+            }
+            Point u = new Point(scoreParent,scoreThis,scoreChild);
+            dsRank.add(u);  
+        }
+
+        List<Integer> R = Rranking(dsRank);
+        Map<String, ThanhPhan> kq = new LinkedHashMap<>();
+
+        for (int j = 0; j < Math.min(k, R.size()); j++) {
+            int index = R.get(j);
+
+            ThanhPhan tp = dsEmbeddingGoc.get(index);
+            Point scores = dsRank.get(index);
+
+            double scoreParent = scores.x();
+            double scoreThis = scores.y();
+            double scoreChild = scores.z();
+
+            if (scoreThis >= scoreParent && scoreThis >= scoreChild) {
+                kq.putIfAbsent(tp.getId(), tp);
+
+            } else if (scoreParent >= scoreChild) {
+               
+                ThanhPhan parent = parentCache.get(tp.getId());
+                if (parent != null) {
+                    kq.putIfAbsent(parent.getId(), parent);
+                }
+
+            } else {
+                List<String> childIds = danhSachCon.get(tp.getId());
+                if (childIds != null && !childIds.isEmpty()) {
+                    List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
+                    for (ThanhPhan child : children) {
+                        kq.putIfAbsent(child.getId(), child);
+                    }
+                }
+            }
+        }
+        return new ArrayList<>(kq.values());
     }
 
     private final Map<String, List<Double>> embeddingCache = new ConcurrentHashMap<>();
@@ -514,7 +627,6 @@ public class ThanhPhanService {
 
     /** Hàm này sử dụng sau khi nó các thành phần đã trộn với NER */
     public void merEmbThanhPhanWithNCon() {
-        Map<String, List<String>> danhSachCon = layTatCaTPCon();
         List<String> thuTu = List.of(
                 "Khoản",
                 "Điều",

@@ -4,6 +4,7 @@ from embedding_model import get_embedding_model
 from ner_xlmr import router as ner_router
 from Gettp import GetThanhPhan
 from typing import Optional
+from Ranking import Rranking
 
 
 # Khởi tạo server FastAPI
@@ -36,4 +37,12 @@ def get_thanh_phan(request: TextRequest):
         return []
 
     return GetThanhPhan(input_text)
+
+class ListPoint(BaseModel) :
+    ListPoints: list[list[float]]
+
+@app.post("/Rranking")
+def get_ranking(data: ListPoint):
+    if(not data.ListPoints): return {"Ranking": []}
+    return {"Ranking": Rranking(data.ListPoints)}
 

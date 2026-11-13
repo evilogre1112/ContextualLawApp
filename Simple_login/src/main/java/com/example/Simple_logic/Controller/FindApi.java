@@ -24,7 +24,7 @@ public class FindApi {
     @GetMapping
     public ResponseEntity<List<ThanhPhan>> find(@RequestParam String q,
                                                 @RequestParam(defaultValue = "5") int k) {
-        return ResponseEntity.ok(thanhPhanService.search(q, k));
+        return ResponseEntity.ok(thanhPhanService.search2(q, k));
     }
     
 }

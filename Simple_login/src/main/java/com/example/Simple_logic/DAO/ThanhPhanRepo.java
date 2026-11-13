@@ -22,25 +22,37 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan,String> {
                     'thanh_phan_embedding', $soUngVien, $embedding
                 )
                 YIELD node, score
+                WHERE score >= $nguong
                 RETURN node
         """)
     List<ThanhPhan> findEmbedding(
         List<Double> embedding,
-        int soUngVien
+        int soUngVien,
+        @Param("nguong") double nguong
     );
+    default List<ThanhPhan> findEmbedding(List<Double> embedding, int soUngVien) {
+        return findEmbedding(embedding, soUngVien, 0.0);
+    }
 
     /**So khớp ngữ nghĩa với Emb gốc */
-    @Query ("""
-                CALL db.index.vector.queryNodes(
-                    'thanh_phan_embedding_goc', $soUngVien, $embedding
-                )
-                YIELD node, score
-                RETURN node
-        """)
+    @Query("""
+        CALL db.index.vector.queryNodes(
+            'thanh_phan_embedding_goc', $soUngVien, $embedding
+        )
+        YIELD node, score
+        WHERE score >= $nguong
+        RETURN node
+        ORDER BY score DESC
+    """)
     List<ThanhPhan> findEmbeddingGoc(
-        List<Double> embedding,
-        int soUngVien  
+            @Param("embedding") List<Double> embedding,
+            @Param("soUngVien") int soUngVien,
+            @Param("nguong") double nguong
     );
+
+    default List<ThanhPhan> findEmbeddingGoc(List<Double> embedding, int soUngVien) {
+        return findEmbeddingGoc(embedding, soUngVien, 0.0);
+    }
 
     @Query("""
         MATCH (cha:`Thành phần`)<-[r]-(con:`Thành phần`)
@@ -83,4 +95,18 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan,String> {
             t.Embedding = row.emb
     """)
     void updateAll(@Param("rows") List<Map<String,Object>> rows);
+
+    @Query ("""
+        MATCH (n:`Thành phần`)-[r]->(b:`Thành phần`)
+        WHERE n.id = $id
+        RETURN b
+        """)
+    ThanhPhan getParent(String id);
+
+    @Query ("""
+        MATCH (n:`Thành phần`)<-[r]-(b)
+        WHERE n.id = $id
+        RETURN b
+        """)
+    List<ThanhPhan> getChild(String id);
 }
