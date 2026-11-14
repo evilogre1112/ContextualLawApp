@@ -38,8 +38,8 @@ def get_thanh_phan(request: TextRequest):
 
     return GetThanhPhan(input_text)
 
-class ListPoint(BaseModel) :
-    ListPoints: list[list[float]]
+class ListPoint(BaseModel):
+    ListPoints: list[list[float | None]]
 
 @app.post("/Rranking")
 def get_ranking(data: ListPoint):

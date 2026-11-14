@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.Simple_logic.Entity.ThanhPhan;
+import com.example.Simple_logic.DTO.ThanhPhanRespone;
 import com.example.Simple_logic.Service.ThanhPhanService;
 
 @RestController 
@@ -21,9 +21,11 @@ public class FindApi {
         this.thanhPhanService = thanhPhanService;
     }
 
-    @GetMapping
-    public ResponseEntity<List<ThanhPhan>> find(@RequestParam String q,
-                                                @RequestParam(defaultValue = "5") int k) {
+   @GetMapping
+    public ResponseEntity<List<ThanhPhanRespone>> find(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "5") int k) {
+
         return ResponseEntity.ok(thanhPhanService.search2(q, k));
     }
     

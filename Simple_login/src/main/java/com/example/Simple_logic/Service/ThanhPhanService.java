@@ -1,6 +1,7 @@
 package com.example.Simple_logic.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -249,7 +250,7 @@ public class ThanhPhanService {
         if (p == null || p.isEmpty()) {
             return List.of();
         }
-        List<List<Double>> listPoints = p.stream().map(point -> List.of(point.x(), point.y(), point.z())).toList();
+        List<List<Double>> listPoints = p.stream().map(point -> Arrays.asList(point.x(), point.y(), point.z())).toList();
         long start = System.nanoTime();
          Map<String, Object> requestBody = Map.of(
             "ListPoints", listPoints
@@ -264,7 +265,7 @@ public class ThanhPhanService {
         return response != null ? response.get("Ranking") : List.of();
     }
 
-    private static final double NGUONG_SEARCH = 0.4;
+    private static final double NGUONG_SEARCH = 0.65;
 
     public List<ThanhPhan> search(String query, int k) {
 
@@ -353,8 +354,19 @@ public class ThanhPhanService {
 
         return danhSach;
     }
+
+    private ThanhPhanRespone toResponse(ThanhPhan tp) {
+        ThanhPhanRespone res = new ThanhPhanRespone();
+
+        res.setId(tp.getId());
+        res.setLoai_thanh_phan(tp.getLoaithanhphan());
+        res.setStt(tp.getStt());
+        res.setNoi_dung(tp.getNoiDung());
+
+        return res;
+    }
     
-    public List<ThanhPhan> search2(String query,int k){
+    public List<ThanhPhanRespone> search2(String query,int k){
         List<Double> embeddingGoc = embed(query);
 
         if (embeddingGoc == null) {
@@ -376,22 +388,22 @@ public class ThanhPhanService {
         }
         int soUngVien = Math.max(k * 10, 100);
 
-        List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingGoc, soUngVien,0.65);
+        List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingTimKiem, soUngVien,NGUONG_SEARCH);
         List<Point> dsRank = new ArrayList<>();
         Map<String, ThanhPhan> parentCache = new HashMap<>();
         for(ThanhPhan tp : dsEmbeddingGoc){
-            double scoreThis = Vvec.cosineSimilarity(tp.getEmbedding(), embeddingTimKiem);
+            double scoreThis = Vvec.cosineSimilarity(tp.getEmbeddingGoc(), embeddingTimKiem);
             ThanhPhan parent = thanhPhanRepo.getParent(tp.getId());     
             parentCache.put(tp.getId(), parent);
 
-            double scoreParent = 0;
+            Double scoreParent = 0.0;
             if (parent != null && parent.getEmbedding() != null) {
                 scoreParent = Vvec.cosineSimilarity(
                     parent.getEmbedding(), embeddingTimKiem
                 );
             }
             List<Double> tBTPCon = getTrungBinhTPConEmbed(tp, danhSachCon);
-            double scoreChild = 0;
+            Double scoreChild = 0.0;
             if (tBTPCon != null) {
                 scoreChild = Vvec.cosineSimilarity(tBTPCon, embeddingTimKiem);
             }
@@ -400,7 +412,7 @@ public class ThanhPhanService {
         }
 
         List<Integer> R = Rranking(dsRank);
-        Map<String, ThanhPhan> kq = new LinkedHashMap<>();
+        Map<String, ThanhPhanRespone> kq = new LinkedHashMap<>();
 
         for (int j = 0; j < Math.min(k, R.size()); j++) {
             int index = R.get(j);
@@ -408,26 +420,30 @@ public class ThanhPhanService {
             ThanhPhan tp = dsEmbeddingGoc.get(index);
             Point scores = dsRank.get(index);
 
-            double scoreParent = scores.x();
-            double scoreThis = scores.y();
-            double scoreChild = scores.z();
+            Double scoreParent = scores.x();
+            Double scoreThis = scores.y();
+            Double scoreChild = scores.z();
 
-            if (scoreThis >= scoreParent && scoreThis >= scoreChild) {
-                kq.putIfAbsent(tp.getId(), tp);
+           if ((scoreParent == null || scoreThis >= scoreParent)
+                    && (scoreChild == null || scoreThis >= scoreChild)) {
 
-            } else if (scoreParent >= scoreChild) {
-               
+                kq.putIfAbsent(tp.getId(), toResponse(tp));
+
+            } else if (scoreParent != null
+                    && (scoreChild == null || scoreParent >= scoreChild)) {
+
                 ThanhPhan parent = parentCache.get(tp.getId());
                 if (parent != null) {
-                    kq.putIfAbsent(parent.getId(), parent);
+                    kq.putIfAbsent(parent.getId(), toResponse(parent));
                 }
 
-            } else {
+            } else if (scoreChild != null) {
+
                 List<String> childIds = danhSachCon.get(tp.getId());
                 if (childIds != null && !childIds.isEmpty()) {
                     List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
                     for (ThanhPhan child : children) {
-                        kq.putIfAbsent(child.getId(), child);
+                        kq.putIfAbsent(child.getId(), toResponse(child));
                     }
                 }
             }
