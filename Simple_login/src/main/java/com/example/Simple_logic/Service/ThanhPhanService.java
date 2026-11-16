@@ -8,7 +8,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.neo4j.core.Neo4jTemplate;
@@ -16,13 +15,10 @@ import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
-import com.example.Simple_logic.DAO.NerRepo;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.DTO.EmbeddingResponse;
-import com.example.Simple_logic.DTO.NEREntityResponse;
 import com.example.Simple_logic.DTO.Point;
-import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.DTO.ThanhPhanRespone;
 import com.example.Simple_logic.Entity.Chuong;
 import com.example.Simple_logic.Entity.Diem;
@@ -34,41 +30,32 @@ import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Extention.*;
 
-import jakarta.annotation.PostConstruct;
 
 import org.springframework.http.MediaType;
-import org.springframework.data.neo4j.core.Neo4jClient;
 
 @Service
 public class ThanhPhanService {
     private final VanBanRepo vanBanRepo;
     private final ThanhPhanRepo thanhPhanRepo;
     private final NERService nerService;
-    private final NerRepo nerRepo;
     private final RestClient client = RestClient.builder()
             .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
-
-    private final Map<String, List<Double>> embeddingTam = new HashMap<>();
-    private final Map<String, Double> trongSoTPConTam = new HashMap<>();
-    Map<String, List<String>> danhSachCon ;
-
+    private final EmbeddingService embeddingService ;
+    private  final CayThanhPhanCache cayThanhPhanCache;
     public ThanhPhanService(VanBanRepo vanBanRepo,
             ThanhPhanRepo thanhPhanRepo,
             Neo4jTemplate neo4jTemplate,
             NERService nerService,
-            Neo4jClient neo4jClient,
-            NerRepo nerRepo) {
+            EmbeddingService embeddingService,
+            CayThanhPhanCache cayThanhPhanCache) {
         this.vanBanRepo = vanBanRepo;
         this.thanhPhanRepo = thanhPhanRepo;
         this.nerService = nerService;
-        this.nerRepo = nerRepo;
+        this.embeddingService = embeddingService;
+        this.cayThanhPhanCache = cayThanhPhanCache;
     }
 
-    @PostConstruct
-    public void init() {
-        this.danhSachCon = layTatCaTPCon();
-    }
 
     private void Init(ThanhPhan tp, VanBan vanBan, ThanhPhanRespone response, String id) {
         tp.setId(id);
@@ -225,13 +212,14 @@ public class ThanhPhanService {
         start = System.nanoTime();
 
         thanhPhanRepo.saveAll(all);
+        cayThanhPhanCache.reload();
 
         Ttime.logTime("Lưu thành phần", start);
 
         return all.size();
     }
 
-    private List<Double> embed(String text) {
+    private double[] embed(String text) {
         if (text == null || text.isBlank()) {
             return null;
         }
@@ -252,15 +240,15 @@ public class ThanhPhanService {
         }
         List<List<Double>> listPoints = p.stream().map(point -> Arrays.asList(point.x(), point.y(), point.z())).toList();
         long start = System.nanoTime();
-         Map<String, Object> requestBody = Map.of(
-            "ListPoints", listPoints
-        );
-         Map<String, List<Integer>> response = client.post()
+        Map<String, Object> requestBody = Map.of(
+                "ListPoints", listPoints);
+        Map<String, List<Integer>> response = client.post()
                 .uri("http://127.0.0.1:8000/Rranking")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(requestBody)
                 .retrieve()
-                .body(new ParameterizedTypeReference<Map<String, List<Integer>>>() {});
+                .body(new ParameterizedTypeReference<Map<String, List<Integer>>>() {
+                });
         Ttime.logTime("Xếp hạng", start);
         return response != null ? response.get("Ranking") : List.of();
     }
@@ -269,20 +257,20 @@ public class ThanhPhanService {
 
     public List<ThanhPhan> search(String query, int k) {
 
-        List<Double> embeddingGoc = embed(query);
+        double[] embeddingGoc = embed(query);
 
         if (embeddingGoc == null) {
             throw new IllegalStateException(
                     "Không tạo được embedding cho truy vấn");
         }
 
-        List<Double> embeddingTimKiem = embeddingGoc;
+        double[] embeddingTimKiem = embeddingGoc;
 
         try {
-            List<Double> vectorner = getEmbedNERInText(query);
+            double[] vectorner = embeddingService.getEmbedNERInText(query);
 
             if (vectorner != null) {
-                embeddingTimKiem = tronSerch(embeddingGoc, vectorner);
+                embeddingTimKiem = embeddingService.tronSerch(embeddingGoc, vectorner);
             }
         } catch (Exception e) {
             System.err.println(
@@ -311,8 +299,8 @@ public class ThanhPhanService {
 
         for (ThanhPhan tp : ungVien.values()) {
 
-            List<Double> goc = tp.getEmbeddingGoc();
-            List<Double> tongHop = tp.getEmbedding();
+            double[] goc = tp.getEmbeddingGoc();
+            double[] tongHop = tp.getEmbedding();
 
             double scoreGoc = -1;
             double scoreTongHop = -1;
@@ -365,22 +353,22 @@ public class ThanhPhanService {
 
         return res;
     }
-    
-    public List<ThanhPhanRespone> search2(String query,int k){
-        List<Double> embeddingGoc = embed(query);
+
+    public List<ThanhPhanRespone> search2(String query, int k) {
+        double[] embeddingGoc = embed(query);
 
         if (embeddingGoc == null) {
             throw new IllegalStateException(
                     "Không tạo được embedding cho truy vấn");
         }
 
-        List<Double> embeddingTimKiem = embeddingGoc;
+        double[] embeddingTimKiem = embeddingGoc;
 
         try {
-            List<Double> vectorner = getEmbedNERInText(query);
+            double[] vectorner = embeddingService.getEmbedNERInText(query);
 
             if (vectorner != null) {
-                embeddingTimKiem = tronSerch(embeddingGoc, vectorner);
+                embeddingTimKiem = embeddingService.tronSerch(embeddingGoc, vectorner);
             }
         } catch (Exception e) {
             System.err.println(
@@ -388,27 +376,47 @@ public class ThanhPhanService {
         }
         int soUngVien = Math.max(k * 10, 100);
 
-        List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingTimKiem, soUngVien,NGUONG_SEARCH);
+        List<ThanhPhan> dsEmbeddingGoc = thanhPhanRepo.findEmbeddingGoc(embeddingTimKiem, soUngVien, NGUONG_SEARCH);
+        
+        // Lấy tất cả id của thành phần con 
+        Map<String, List<String>> dsCon = cayThanhPhanCache.get();
+        Set<String> idCon = new HashSet<>();
+        for (ThanhPhan tp : dsEmbeddingGoc) {
+            List<String> c = dsCon.get(tp.getId());
+            if (c != null) idCon.addAll(c);
+        }
+
+        Map<String, double[]> embCon = new HashMap<>();
+        if (!idCon.isEmpty()) {
+            for (ThanhPhan c : thanhPhanRepo.findAllById(idCon)) {
+                if (c.getEmbedding() != null) {
+                    embCon.put(c.getId(), c.getEmbedding());
+                }
+            }
+        }
+
         List<Point> dsRank = new ArrayList<>();
         Map<String, ThanhPhan> parentCache = new HashMap<>();
-        for(ThanhPhan tp : dsEmbeddingGoc){
+        for (ThanhPhan tp : dsEmbeddingGoc) {
             double scoreThis = Vvec.cosineSimilarity(tp.getEmbeddingGoc(), embeddingTimKiem);
-            ThanhPhan parent = thanhPhanRepo.getParent(tp.getId());     
+            ThanhPhan parent = thanhPhanRepo.getParent(tp.getId());
             parentCache.put(tp.getId(), parent);
 
             Double scoreParent = 0.0;
             if (parent != null && parent.getEmbedding() != null) {
                 scoreParent = Vvec.cosineSimilarity(
-                    parent.getEmbedding(), embeddingTimKiem
-                );
+                        parent.getEmbedding(), embeddingTimKiem);
             }
-            List<Double> tBTPCon = getTrungBinhTPConEmbed(tp, danhSachCon);
+            double[] tBTPCon = embeddingService.getTrungBinhTPConEmbed(tp, dsCon, embCon);
+          
             Double scoreChild = 0.0;
             if (tBTPCon != null) {
+                embeddingService.merwithparent(tp,tBTPCon);
+                tBTPCon = Vvec.ChuanHoaVec(tBTPCon); 
                 scoreChild = Vvec.cosineSimilarity(tBTPCon, embeddingTimKiem);
             }
-            Point u = new Point(scoreParent,scoreThis,scoreChild);
-            dsRank.add(u);  
+            Point u = new Point(scoreParent, scoreThis, scoreChild);
+            dsRank.add(u);
         }
 
         List<Integer> R = Rranking(dsRank);
@@ -424,7 +432,7 @@ public class ThanhPhanService {
             Double scoreThis = scores.y();
             Double scoreChild = scores.z();
 
-           if ((scoreParent == null || scoreThis >= scoreParent)
+            if ((scoreParent == null || scoreThis >= scoreParent)
                     && (scoreChild == null || scoreThis >= scoreChild)) {
 
                 kq.putIfAbsent(tp.getId(), toResponse(tp));
@@ -439,7 +447,7 @@ public class ThanhPhanService {
 
             } else if (scoreChild != null) {
 
-                List<String> childIds = danhSachCon.get(tp.getId());
+                List<String> childIds = dsCon.get(tp.getId());
                 if (childIds != null && !childIds.isEmpty()) {
                     List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
                     for (ThanhPhan child : children) {
@@ -449,321 +457,6 @@ public class ThanhPhanService {
             }
         }
         return new ArrayList<>(kq.values());
-    }
-
-    private final Map<String, List<Double>> embeddingCache = new ConcurrentHashMap<>();
-
-    private List<List<Double>> embedCoCache(List<String> tenNers) {
-        List<String> chuaCoCache = tenNers.stream()
-                .filter(ten -> !embeddingCache.containsKey(ten))
-                .distinct()
-                .toList();
-        if (!chuaCoCache.isEmpty()) {
-            List<List<Double>> embeddings = embedBatch(chuaCoCache);
-            if (embeddings == null || embeddings.size() != chuaCoCache.size()) {
-                throw new IllegalStateException("Số lượng embedding trả về không khớp số lượng NER");
-            }
-            for (int i = 0; i < chuaCoCache.size(); i++) {
-                embeddingCache.put(chuaCoCache.get(i), embeddings.get(i));
-            }
-        }
-        return tenNers.stream()
-                .map(embeddingCache::get)
-                .toList();
-    }
-
-    private List<List<Double>> embedBatch(List<String> texts) {
-        List<List<Double>> result = client.post()
-                .uri("http://127.0.0.1:8000/embed/batch")
-                .body(Map.of("texts", texts))
-                .retrieve()
-                .body(new ParameterizedTypeReference<List<List<Double>>>() {
-                });
-
-        if (result == null) {
-            throw new IllegalStateException("Python không trả về embedding");
-        }
-
-        return result;
-    }
-
-    private List<Double> trungBinhNer(List<String> tenNER) {
-        List<String> ds = tenNER.stream()
-                .filter(s -> s != null && !s.isBlank())
-                .toList();
-        if (ds.isEmpty()) {
-            return null;
-        }
-        List<List<Double>> dsEmbedding = embedCoCache(ds);
-
-        double[] tb = new double[768];
-        for (int j = 0; j < dsEmbedding.size(); j++) {
-            List<Double> e = dsEmbedding.get(j);
-            String ten = ds.get(j);
-            double n = 0;
-            for (double x : e)
-                n += x * x;
-            n = Math.sqrt(n);
-            if (n == 0) {
-                throw new IllegalStateException("Vector NER có độ dài 0: " + ten);
-            }
-            for (int i = 0; i < 768; i++) {
-                tb[i] += e.get(i) / n / ds.size();
-            }
-        }
-
-        return Vvec.ChuanHoaVec(tb);
-    }
-
-    private List<Double> getEmbedNERInText(String text) {
-        List<NEREntityResponse> ds = nerService.exNer(text);
-        if (ds == null) {
-            return null;
-        }
-        return trungBinhNer(ds.stream().map(NEREntityResponse::text).toList());
-    }
-
-    private List<Double> getTrungBinhTPConEmbed(ThanhPhan tp, Map<String, List<String>> danhSachCon) {
-        List<String> dsIdCon = danhSachCon.get(tp.getId());
-
-        if (dsIdCon == null || dsIdCon.isEmpty()) {
-            return null;
-        }
-
-        int n = -1;
-        double[] tong = null;
-
-        for (String idCon : dsIdCon) {
-            List<Double> emb = embeddingTam.get(idCon);
-
-            if (emb == null) {
-                continue;
-            }
-
-            if (tong == null) {
-                n = emb.size();
-                tong = new double[n];
-            }
-
-            cong(tong, emb, 1.0);
-        }
-
-        if (tong == null) {
-            return null;
-        }
-
-        return Vvec.ChuanHoaVec(tong);
-    }
-
-    private Map<String, List<String>> layTatCaTPCon() {
-        List<QuanHe> rows = thanhPhanRepo.getDanhSachQuanHe();
-
-        Map<String, List<String>> ketQua = new HashMap<>();
-
-        for (QuanHe row : rows) {
-            ketQua.computeIfAbsent(row.tpId(), k -> new ArrayList<>())
-                    .add(row.ten());
-        }
-
-        return ketQua;
-    }
-
-    private Map<String, List<String>> layTatCaNER() {
-
-        List<QuanHe> rows = nerRepo.layTatCaNERThuocTP();
-
-        Map<String, List<String>> ketQua = new HashMap<>();
-
-        for (QuanHe row : rows) {
-            ketQua.computeIfAbsent(
-                    row.tpId(), k -> new ArrayList<>()).add(row.ten());
-        }
-
-        return ketQua;
-    }
-
-    /** Tính emb tạm */
-    public void merEmbThanhPhanWithNER() {
-        Map<String, List<String>> danhSachNER = layTatCaNER();
-        embeddingTam.clear();
-        trongSoTPConTam.clear();
-
-        List<ThanhPhan> dsTp = thanhPhanRepo.getThanhPhanCoEmb();
-
-        for (ThanhPhan tp : dsTp) {
-            try {
-                List<Double> goc = tp.getEmbeddingGoc();
-
-                if (goc == null) {
-                    goc = tp.getEmbedding();
-                }
-
-                List<Double> ner = trungBinhNer(danhSachNER.getOrDefault(tp.getId(), List.of()));
-
-                double trongSoNER = 1.0 - A0 - A1;
-
-                double trongSoGoc;
-                double trongSoCon;
-
-                if (ner != null) {
-                    trongSoGoc = A0;
-                    trongSoCon = A1;
-                } else {
-                    trongSoGoc = A0 + trongSoNER / 2.0;
-                    trongSoCon = A1 + trongSoNER / 2.0;
-                }
-
-                double[] v1 = new double[goc.size()];
-
-                cong(v1, goc, trongSoGoc);
-
-                if (ner != null) {
-                    cong(v1, ner, trongSoNER);
-                }
-
-                List<Double> ketQua = new ArrayList<>(v1.length);
-
-                for (double x : v1) {
-                    ketQua.add(x);
-                }
-
-                embeddingTam.put(tp.getId(), ketQua);
-                trongSoTPConTam.put(tp.getId(), trongSoCon);
-
-            } catch (Exception e) {
-                System.err.println(
-                        "Lỗi trộn vector cho " + tp.getId()
-                                + ": " + e.getMessage());
-            }
-        }
-
-        System.out.println(
-                "Đã tạo vector trung gian cho " + embeddingTam.size() + " thành phần.");
-    }
-
-    /** Hàm này sử dụng sau khi nó các thành phần đã trộn với NER */
-    public void merEmbThanhPhanWithNCon() {
-        List<String> thuTu = List.of(
-                "Khoản",
-                "Điều",
-                "Mục",
-                "Chương");
-
-        for (String loai : thuTu) {
-
-            List<ThanhPhan> dsTp = thanhPhanRepo.getThanhPhanTheoLoai(loai);
-
-            int soLuong = 0;
-
-            for (ThanhPhan tp : dsTp) {
-                try {
-                    List<Double> base = embeddingTam.get(tp.getId());
-
-                    if (base == null) {
-                        continue;
-                    }
-
-                    List<Double> tpcon = getTrungBinhTPConEmbed(tp, danhSachCon);
-
-                    if (tpcon == null) {
-                        continue;
-                    }
-
-                    double[] v2 = base.stream()
-                            .mapToDouble(Double::doubleValue)
-                            .toArray();
-
-                    double trongSoCon = trongSoTPConTam.getOrDefault(tp.getId(), A1);
-
-                    cong(v2, tpcon, trongSoCon);
-
-                    List<Double> ketQua = new ArrayList<>(v2.length);
-
-                    for (double x : v2) {
-                        ketQua.add(x);
-                    }
-
-                    embeddingTam.put(tp.getId(), ketQua);
-
-                    soLuong++;
-
-                } catch (Exception e) {
-                    System.err.println("Lỗi trộn con cho " + tp.getId() + ": " + e.getMessage());
-                }
-            }
-
-            System.out.println(
-                    "Đã xử lý tầng " + loai + ", số thành phần được trộn: " + soLuong);
-        }
-    }
-
-    public void luuEmbeddingCuoiCung() {
-        List<Map<String, Object>> rows = new ArrayList<>();
-
-        for (Map.Entry<String, List<Double>> entry : embeddingTam.entrySet()) {
-            try {
-                List<Double> vector = entry.getValue();
-
-                List<Double> embeddingFinal = Vvec
-                        .ChuanHoaVec(vector.stream().mapToDouble(Double::doubleValue).toArray());
-
-                rows.add(Map.of(
-                        "id", entry.getKey(),
-                        "emb", embeddingFinal));
-
-            } catch (Exception e) {
-                System.err.println(
-                        "Lỗi chuẩn hóa " + entry.getKey() + ": " + e.getMessage());
-            }
-        }
-
-        if (!rows.isEmpty()) {
-            thanhPhanRepo.updateAll(rows);
-        }
-
-        System.out.println(
-                "Đã lưu " + rows.size() + " embedding cuối cùng.");
-    }
-
-    private static final double A0 = 0.55; // Trọng số vector thành phần gốc (giữ nét đặc trưng cốt lõi)
-    private static final double A1 = 0.30; // Trọng số vector thành phần con (đóng góp ngữ cảnh bottom-up)
-    // Trọng số NER = 1.0 - A0 - A1 = 0.15 (thực thể pháp lý)
-
-    private static final double B0 = 0.80; // Trọng số câu truy vấn gốc (80% câu hỏi, 20% NER bổ trợ)
-
-    private List<Double> tronSerch(List<Double> thanhPhan, List<Double> ner) {
-        double tong = 1.0 - B0;
-
-        double[] v = new double[thanhPhan.size()];
-
-        cong(v, thanhPhan, B0);
-
-        if (ner != null && tong > 0) {
-            cong(v, ner, tong);
-        }
-
-        return Vvec.ChuanHoaVec(v);
-    }
-
-    /** v += w * (u / |u|) */
-    private static void cong(double[] v, List<Double> u, double w) {
-        if (u.size() != v.length) {
-            throw new IllegalStateException(
-                    "Số chiều lệch nhau: " + u.size() + " và " + v.length);
-        }
-
-        double norm = 0;
-        for (double x : u)
-            norm += x * x;
-        norm = Math.sqrt(norm);
-
-        if (norm == 0) {
-            throw new IllegalStateException("Vector có độ dài 0");
-        }
-
-        for (int i = 0; i < v.length; i++) {
-            v[i] += w * u.get(i) / norm;
-        }
     }
 
 }

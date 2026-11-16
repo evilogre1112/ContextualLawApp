@@ -1,20 +1,17 @@
 package com.example.Simple_logic.DTO;
 
-import java.util.List;
-
 public class EmbeddingResponse {
-    private List<Double> embedding;
+    private double[] embedding;
 
-    
-    public EmbeddingResponse(List<Double> embedding) {
+    public EmbeddingResponse(double[] embedding) {
         this.embedding = embedding;
     }
 
-    public List<Double> getEmbedding() {
+    public double[] getEmbedding() {
         return embedding;
     }
 
-    public void setEmbedding(List<Double> embedding) {
+    public void setEmbedding(double[] embedding) {
         this.embedding = embedding;
     }
 }

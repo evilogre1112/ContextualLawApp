@@ -1,5 +1,6 @@
 package com.example.Simple_logic.Controller;
 
+import com.example.Simple_logic.Service.EmbeddingService;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,10 +18,12 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RestController 
 @RequestMapping ("/api/ArticleComponent")
 public class ArticleComponentApi {
+    private final EmbeddingService embeddingService;
     private final ThanhPhanService thanhPhanService;
 
-    public ArticleComponentApi(ThanhPhanService thanhPhanService) {
+    public ArticleComponentApi(ThanhPhanService thanhPhanService,EmbeddingService embeddingService) {
         this.thanhPhanService = thanhPhanService;
+        this.embeddingService = embeddingService;
     }
     
     @PostMapping("/{id}/components")
@@ -43,10 +46,8 @@ public class ArticleComponentApi {
     @PostMapping("/merge-embedding")
     public ResponseEntity<?> mergeEmbedding() {
         try {
-            thanhPhanService.merEmbThanhPhanWithNER();
-            thanhPhanService.merEmbThanhPhanWithNCon();
-            thanhPhanService.luuEmbeddingCuoiCung();
-
+            embeddingService.capNhatEmbedding();
+            
             return ResponseEntity.ok(
                 Map.of("message", "Merge embedding thành công")
             );

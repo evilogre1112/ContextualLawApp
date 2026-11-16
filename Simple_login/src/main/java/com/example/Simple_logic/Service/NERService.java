@@ -1,5 +1,7 @@
 package com.example.Simple_logic.Service;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -11,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import com.example.Simple_logic.DAO.NerRepo;
 import com.example.Simple_logic.DTO.NEREntityResponse;
 import com.example.Simple_logic.DTO.NERResponse;
+import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Extention.*;
 
@@ -62,5 +65,19 @@ public class NERService {
                                     ))).toList();
          Ttime.logTime("Lưu NER", start);
         return  entities;
+    }
+
+    public Map<String, List<String>> layTatCaNER() {
+
+        List<QuanHe> rows = nerRepo.layTatCaNERThuocTP();
+
+        Map<String, List<String>> ketQua = new HashMap<>();
+
+        for (QuanHe row : rows) {
+            ketQua.computeIfAbsent(
+                    row.tpId(), k -> new ArrayList<>()).add(row.ten());
+        }
+
+        return ketQua;
     }
 }

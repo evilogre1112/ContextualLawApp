@@ -35,7 +35,7 @@ public abstract class ThanhPhan {
     private String loaithanhphan;
 
     @Property("Embedding")
-    private List<Double> embedding;
+    private double[] embedding;
 
     @Relationship (
         type = "Nhắc đến NER",
@@ -44,7 +44,7 @@ public abstract class ThanhPhan {
     private List<NER> ners = new ArrayList<>();
 
     @Property ("EmbeddingGoc")
-    private List<Double> embeddingGoc;
+    private double[] embeddingGoc;
 
     @Relationship (
         type = "Thành phần thuộc Văn bản",
@@ -100,11 +100,11 @@ public abstract class ThanhPhan {
     }
 
     @JsonIgnore
-    public List<Double> getEmbedding() {
+    public double[] getEmbedding() {
         return embedding;
     }
 
-    public void setEmbedding(List<Double> embedding) {
+    public void setEmbedding(double[] embedding) {
         this.embedding = embedding;
     }
 
@@ -117,11 +117,11 @@ public abstract class ThanhPhan {
     }
 
     @JsonIgnore
-    public List<Double> getEmbeddingGoc() {
+    public double[] getEmbeddingGoc() {
         return embeddingGoc;
     }
     
-    public void setEmbeddingGoc(List<Double> embeddingGoc) {
+    public void setEmbeddingGoc(double[] embeddingGoc) {
         this.embeddingGoc = embeddingGoc;
     }
 

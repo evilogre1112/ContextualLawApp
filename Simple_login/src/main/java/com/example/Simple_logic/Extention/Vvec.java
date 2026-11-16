@@ -1,36 +1,34 @@
 package com.example.Simple_logic.Extention;
 
-import java.util.ArrayList;
-import java.util.List;
 
 public class Vvec {
-        public static double cosineSimilarity(List<Double> a,List<Double> b) {
-            if (a.size() != b.size()) {
-                throw new IllegalStateException(
-                    "Số chiều embedding không khớp"
-                );
-            }
-
-            double tichVoHuong = 0;
-            double normA = 0;
-            double normB = 0;
-
-            for (int i = 0; i < a.size(); i++) {
-                double x = a.get(i);
-                double y = b.get(i);
-
-                tichVoHuong += x * y;
-                normA += x * x;
-                normB += y * y;
-            }
-
-            if (normA == 0 || normB == 0) {
-                return 0;
-            }
-
-            return tichVoHuong / (Math.sqrt(normA) * Math.sqrt(normB));
+    public static double cosineSimilarity(double[] a, double[] b) {
+        if (a.length != b.length) {
+            throw new IllegalStateException(
+                    "Số chiều embedding không khớp");
         }
-    public static List<Double> ChuanHoaVec(double [] v){
+
+        double tichVoHuong = 0;
+        double normA = 0;
+        double normB = 0;
+
+        for (int i = 0; i < a.length; i++) {
+            double x = a[i];
+            double y = b[i];
+
+            tichVoHuong += x * y;
+            normA += x * x;
+            normB += y * y;
+        }
+
+        if (normA == 0 || normB == 0) {
+            return 0;
+        }
+
+        return tichVoHuong / (Math.sqrt(normA) * Math.sqrt(normB));
+    }
+
+    public static double[] ChuanHoaVec(double[] v) {
         double norm = 0;
         for (double x : v)
             norm += x * x;
@@ -39,10 +37,10 @@ public class Vvec {
         if (norm == 0) {
             throw new IllegalStateException("Vector kết quả có độ dài 0");
         }
-        List<Double> kq = new ArrayList<>(v.length);
-        for (double x : v) {
-            kq.add(x / norm);
+        double[] kq = new double[v.length];
+        for (int i = 0 ; i < v.length;i++) {
+            kq[i] = v[i] / norm;
         }
-        return kq ;
+        return kq;
     }
 }
