@@ -9,13 +9,12 @@ import java.util.Set;
 import org.springframework.stereotype.Service;
 
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
+import com.example.Simple_logic.Config.SearchConfig;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 
 @Service
 public class ThanhPhanCandidateSearchService {
-
-    private static final double NGUONG_SEARCH = 0.7;
 
     private final ThanhPhanRepo thanhPhanRepo;
     private final CayThanhPhanCache cayThanhPhanCache;
@@ -27,10 +26,16 @@ public class ThanhPhanCandidateSearchService {
         this.cayThanhPhanCache = cayThanhPhanCache;
     }
 
+    // Tìm ứng viên gần nhất và thu thập embedding của các thành phần con liên quan.
     public SearchContext findCandidates(double[] embeddingTimKiem, int k) {
-        int soUngVien = Math.max(k * 10, 100);
+        int soUngVien = Math.max(
+                k * SearchConfig.CANDIDATE_MULTIPLIER,
+                SearchConfig.MIN_CANDIDATE_COUNT);
         List<ThanhPhan> candidates =
-                thanhPhanRepo.findEmbeddingGoc(embeddingTimKiem, soUngVien, NGUONG_SEARCH);
+                thanhPhanRepo.findEmbeddingGoc(
+                        embeddingTimKiem,
+                        soUngVien,
+                        SearchConfig.VECTOR_SIMILARITY_THRESHOLD);
 
         Map<String, List<String>> descendants = cayThanhPhanCache.get();
         Set<String> childIds = new HashSet<>();

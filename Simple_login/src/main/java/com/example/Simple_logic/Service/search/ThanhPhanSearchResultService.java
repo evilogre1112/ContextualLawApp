@@ -9,24 +9,30 @@ import org.springframework.stereotype.Service;
 
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DTO.Point;
-import com.example.Simple_logic.DTO.ThanhPhanRespone;
+import com.example.Simple_logic.DTO.ThanhPhanResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
+import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 
 @Service
 public class ThanhPhanSearchResultService {
 
     private final ThanhPhanRepo thanhPhanRepo;
+    private final ThanhPhanMapper thanhPhanMapper;
 
-    public ThanhPhanSearchResultService(ThanhPhanRepo thanhPhanRepo) {
+    public ThanhPhanSearchResultService(
+            ThanhPhanRepo thanhPhanRepo,
+            ThanhPhanMapper thanhPhanMapper) {
         this.thanhPhanRepo = thanhPhanRepo;
+        this.thanhPhanMapper = thanhPhanMapper;
     }
 
-    public List<ThanhPhanRespone> buildResults(
+    // Chọn thành phần, cha hoặc các con phù hợp nhất dựa trên điểm xếp hạng.
+    public List<ThanhPhanResponse> buildResults(
             int k,
             ThanhPhanCandidateSearchService.SearchContext context,
             ThanhPhanSearchScoringService.ScoringResult scoringResult,
             List<Integer> ranking) {
-        Map<String, ThanhPhanRespone> results = new LinkedHashMap<>();
+        Map<String, ThanhPhanResponse> results = new LinkedHashMap<>();
 
         for (int j = 0; j < Math.min(k, ranking.size()); j++) {
             int index = ranking.get(j);
@@ -40,14 +46,14 @@ public class ThanhPhanSearchResultService {
             if ((scoreParent == null || scoreThis >= scoreParent)
                     && (scoreChild == null || scoreThis >= scoreChild)) {
 
-                results.putIfAbsent(candidate.getId(), toResponse(candidate));
+                results.putIfAbsent(candidate.getId(), thanhPhanMapper.toResponse(candidate));
 
             } else if (scoreParent != null
                     && (scoreChild == null || scoreParent >= scoreChild)) {
 
                 ThanhPhan parent = scoringResult.parents().get(candidate.getId());
                 if (parent != null) {
-                    results.putIfAbsent(parent.getId(), toResponse(parent));
+                    results.putIfAbsent(parent.getId(), thanhPhanMapper.toResponse(parent));
                 }
 
             } else if (scoreChild != null) {
@@ -56,23 +62,12 @@ public class ThanhPhanSearchResultService {
                 if (childIds != null && !childIds.isEmpty()) {
                     List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
                     for (ThanhPhan child : children) {
-                        results.putIfAbsent(child.getId(), toResponse(child));
+                        results.putIfAbsent(child.getId(), thanhPhanMapper.toResponse(child));
                     }
                 }
             }
         }
 
         return new ArrayList<>(results.values());
-    }
-
-    private ThanhPhanRespone toResponse(ThanhPhan thanhPhan) {
-        ThanhPhanRespone response = new ThanhPhanRespone();
-
-        response.setId(thanhPhan.getId());
-        response.setLoai_thanh_phan(thanhPhan.getLoaithanhphan());
-        response.setStt(thanhPhan.getStt());
-        response.setNoi_dung(thanhPhan.getNoiDung());
-
-        return response;
     }
 }

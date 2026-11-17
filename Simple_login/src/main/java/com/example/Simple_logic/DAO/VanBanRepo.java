@@ -7,6 +7,7 @@ import java.util.UUID;
 
 
 public interface VanBanRepo extends Neo4jRepository<VanBan, String> {
+    // Kiểm tra dữ liệu bắt buộc, sinh mã nếu thiếu rồi lưu văn bản.
     default VanBan add(VanBan vanBan){
         if(vanBan == null){
             throw new IllegalArgumentException("Văn bản không được để trống");

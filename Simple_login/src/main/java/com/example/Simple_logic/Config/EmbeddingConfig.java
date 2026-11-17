@@ -3,11 +3,13 @@ package com.example.Simple_logic.Config;
 public final class EmbeddingConfig {
 
     private EmbeddingConfig() {}
-    /** Quy tắc hệ số của thành phần đang xét(thành phần gốc) luôn chiếm ưu thế để tránh biến dạng quá mức */
-    public static final double A0 = 0.55; // Trọng số vector thành phần gốc (giữ nét đặc trưng cốt lõi)
-    public static final double A1 = 0.30; // Trọng số vector thành phần con (đóng góp ngữ cảnh bottom-up)
-    // Trọng số NER = 1.0 - A0 - A1 = 0.15 (thực thể pháp lý)
-    public static final double B0 = 0.80; // Trọng số câu truy vấn gốc (80% câu hỏi, 20% NER bổ trợ)
+    /** Trọng số giữ lại đặc trưng của chính thành phần. */
+    public static final double ROOT_COMPONENT_WEIGHT = 0.55;
+    /** Trọng số ngữ cảnh đóng góp từ các thành phần con. */
+    public static final double CHILD_COMPONENT_WEIGHT = 0.30;
+    /** Trọng số embedding gốc của câu truy vấn khi trộn với embedding NER. */
+    public static final double QUERY_TEXT_WEIGHT = 0.80;
 
-    public static final double HE_SO_CHA = 0.30; // Hệ số khi gộp thành phần đó với cha của nó
+    /** Trọng số embedding của thành phần cha khi gộp vào vector con. */
+    public static final double PARENT_COMPONENT_WEIGHT = 0.30;
 }

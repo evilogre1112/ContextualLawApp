@@ -20,6 +20,7 @@ public class NerController {
         this.nerService = nerService;
     }
 
+    // Trích xuất và lưu các thực thể NER có trong văn bản gửi lên.
     @PostMapping("/extract")
     public ResponseEntity<?> extract(@Valid @RequestBody String request) {
         List<NER> ner = nerService.saveNer(request);

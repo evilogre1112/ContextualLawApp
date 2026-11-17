@@ -19,6 +19,7 @@ public class CayThanhPhanCache {
 
     public CayThanhPhanCache(ThanhPhanRepo repo) { this.thanhPhanRepo = repo; }
 
+    // Tải lại ánh xạ thành phần cha-con từ kho dữ liệu vào bộ nhớ đệm.
     @PostConstruct
     public void reload() {
         Map<String, List<String>> m = new HashMap<>();

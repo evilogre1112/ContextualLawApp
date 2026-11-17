@@ -12,7 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.example.Simple_logic.DTO.EmbeddingResponse;
-import com.example.Simple_logic.Extention.Ttime;
+import com.example.Simple_logic.Extension.Ttime;
 
 @Service
 public class EmbeddingModelService {
@@ -23,7 +23,7 @@ public class EmbeddingModelService {
 
     private final Map<String, double[]> embeddingCache = new ConcurrentHashMap<>();
 
-    // Embedding đơn
+    // Tạo vector embedding cho một văn bản thông qua Python API.
     public double[] embed(String text) {
         if (text == null || text.isBlank()) {
             return null;
@@ -45,7 +45,7 @@ public class EmbeddingModelService {
                 : null;
     }
 
-    // Embedding hàng loạt
+    // Tạo vector embedding cho danh sách văn bản thông qua Python API.
     public List<double[]> embedBatch(List<String> texts) {
         if (texts == null || texts.isEmpty()) {
             return List.of();
@@ -66,7 +66,7 @@ public class EmbeddingModelService {
         return result;
     }
 
-    // Embedding có cache
+    // Chỉ tạo embedding còn thiếu trong cache rồi trả về theo thứ tự văn bản đầu vào.
     public List<double[]> embedCoCache(List<String> texts) {
 
         List<String> ds = texts.stream()

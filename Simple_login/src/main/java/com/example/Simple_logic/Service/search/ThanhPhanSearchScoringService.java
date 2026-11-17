@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.Entity.ThanhPhan;
-import com.example.Simple_logic.Extention.Vvec;
+import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.embedding.ThanhPhanVectorService;
 
 @Service
@@ -26,6 +26,7 @@ public class ThanhPhanSearchScoringService {
         this.thanhPhanVectorService = thanhPhanVectorService;
     }
 
+    // Tính điểm tương đồng của từng ứng viên, thành phần cha và các thành phần con.
     public ScoringResult score(
             ThanhPhanCandidateSearchService.SearchContext context,
             double[] embeddingTimKiem) {

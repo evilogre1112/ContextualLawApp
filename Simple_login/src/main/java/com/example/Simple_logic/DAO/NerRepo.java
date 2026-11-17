@@ -15,6 +15,7 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
         String loaiNER
     );
 
+    // Chuẩn hóa và lưu NER mới, hoặc trả về node đã tồn tại cùng tên và loại.
     default NER add(NER ner){
         if(ner == null){
             throw new IllegalArgumentException("NER không được để trống");
@@ -41,7 +42,8 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
         return save(ner);
     }
 
-    @Query ("""
+    // Lấy danh sách tên NER duy nhất gắn với từng thành phần.
+    @Query("""
             MATCH (t:`Thành phần`)-[:`Nhắc đến NER`]->(n:`NER`)
             WHERE n.`Tên NER` IS NOT NULL
             AND trim(n.`Tên NER`) <> ''

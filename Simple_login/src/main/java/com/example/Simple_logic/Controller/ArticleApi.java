@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.DTO.ArticleRequest;
-import com.example.Simple_logic.DTO.ArticleRespone;
+import com.example.Simple_logic.DTO.ArticleResponse;
 import com.example.Simple_logic.DTO.CreateArticleRequest;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Mapper.ArticleMapper;
@@ -51,7 +51,7 @@ public class ArticleApi
             request.soLuong()
         );
         Page<VanBan> result = vanBanRepo.findAll(pageable);
-        Page<ArticleRespone> vanBans = result.map(articleMapper::toResponse);
+        Page<ArticleResponse> vanBans = result.map(articleMapper::toResponse);
         return ResponseEntity.ok(vanBans);
     }
 

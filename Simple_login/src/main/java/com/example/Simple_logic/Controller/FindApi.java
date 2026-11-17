@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.Simple_logic.DTO.ThanhPhanRespone;
+import com.example.Simple_logic.DTO.ThanhPhanResponse;
 import com.example.Simple_logic.Service.search.ThanhPhanSearchService;
 
 @RestController 
@@ -21,8 +21,9 @@ public class FindApi {
         this.thanhPhanService = thanhPhanService;
     }
 
+   // Tìm các thành phần pháp lý liên quan đến truy vấn và giới hạn số kết quả.
    @GetMapping
-    public ResponseEntity<List<ThanhPhanRespone>> find(
+    public ResponseEntity<List<ThanhPhanResponse>> find(
             @RequestParam String q,
             @RequestParam(defaultValue = "5") int k) {
 

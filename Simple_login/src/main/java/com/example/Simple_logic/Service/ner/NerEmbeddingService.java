@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.Simple_logic.DTO.NEREntityResponse;
-import com.example.Simple_logic.Extention.Vvec;
+import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 
 @Service
@@ -21,6 +21,7 @@ public class NerEmbeddingService {
         this.embeddingModelService = embeddingModelService;
     }
 
+    // Tái sử dụng embedding đã lưu và chỉ gọi mô hình cho các tên NER còn thiếu.
     private List<double[]> embedWithCache(List<String> nerNames) {
         List<String> notCached = nerNames.stream()
                 .filter(name -> !embeddingModelService.getEmbeddingCache().containsKey(name))
@@ -41,6 +42,7 @@ public class NerEmbeddingService {
                 .toList();
     }
 
+    // Tính trung bình các embedding NER sau khi chuẩn hóa từng vector.
     public double[] averageNerEmbeddings(List<String> nerNames) {
         List<String> names = nerNames.stream()
                 .filter(name -> name != null && !name.isBlank())
@@ -69,6 +71,7 @@ public class NerEmbeddingService {
         return Vvec.ChuanHoaVec(average);
     }
 
+    // Trích xuất NER trong văn bản rồi trả về embedding tổng hợp của chúng.
     public double[] embedEntitiesInText(String text) {
         List<NEREntityResponse> entities = nerService.exNer(text);
         if (entities == null) {

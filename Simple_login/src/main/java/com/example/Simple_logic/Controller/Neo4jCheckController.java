@@ -14,6 +14,7 @@ public class Neo4jCheckController {
         this.driver = driver ;
     }
 
+    // Kiểm tra kết nối Neo4j bằng một truy vấn đọc đơn giản.
     @GetMapping("/api/neo4j/check")
     public Map<String, Object> checkConnection(){
         try (var session = driver.session(SessionConfig.forDatabase("17908662"))){

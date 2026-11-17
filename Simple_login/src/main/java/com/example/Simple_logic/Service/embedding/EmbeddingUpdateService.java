@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import com.example.Simple_logic.Config.EmbeddingConfig;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.Entity.ThanhPhan;
-import com.example.Simple_logic.Extention.Vvec;
+import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 import com.example.Simple_logic.Service.ner.NERService;
 import com.example.Simple_logic.Service.ner.NerEmbeddingService;
@@ -55,13 +55,14 @@ public class EmbeddingUpdateService {
     public boolean getTinhLaiTatCa() { return tinhLaiTatCa; }
     public void setTinhLaiTatCa(boolean v) { this.tinhLaiTatCa = v; }
 
+    // Chạy lần lượt các bước trộn embedding và lưu kết quả cuối cùng.
     public synchronized void capNhatEmbedding() {
         merEmbThanhPhanWithNER();
         merEmbThanhPhanWithNCon();
         luuEmbeddingCuoiCung();
     }
 
-     /** Tính emb tạm */
+    /** Kết hợp embedding gốc với thông tin NER để tạo vector tạm cho từng thành phần. */
     public void merEmbThanhPhanWithNER() {
         Map<String, List<String>> danhSachNER = nerService.layTatCaNER();
         embeddingTam.clear();
@@ -82,17 +83,19 @@ public class EmbeddingUpdateService {
                 double[] ner = nerEmbeddingService.averageNerEmbeddings(
                         danhSachNER.getOrDefault(tp.getId(), List.of()));
 
-                double trongSoNER = 1.0 - EmbeddingConfig.A0 - EmbeddingConfig.A1;
+                double trongSoNER = 1.0
+                        - EmbeddingConfig.ROOT_COMPONENT_WEIGHT
+                        - EmbeddingConfig.CHILD_COMPONENT_WEIGHT;
 
                 double trongSoGoc;
                 double trongSoCon;
 
                 if (ner != null) {
-                    trongSoGoc = EmbeddingConfig.A0;
-                    trongSoCon = EmbeddingConfig.A1;
+                    trongSoGoc = EmbeddingConfig.ROOT_COMPONENT_WEIGHT;
+                    trongSoCon = EmbeddingConfig.CHILD_COMPONENT_WEIGHT;
                 } else {
-                    trongSoGoc = EmbeddingConfig.A0 + trongSoNER / 2.0;
-                    trongSoCon = EmbeddingConfig.A1 + trongSoNER / 2.0;
+                    trongSoGoc = EmbeddingConfig.ROOT_COMPONENT_WEIGHT + trongSoNER / 2.0;
+                    trongSoCon = EmbeddingConfig.CHILD_COMPONENT_WEIGHT + trongSoNER / 2.0;
                 }
 
                 double[] v1 = new double[goc.length];
@@ -118,7 +121,7 @@ public class EmbeddingUpdateService {
                 "Đã tạo vector trung gian cho " + getEmbeddingtam().size() + " thành phần.");
     }
 
-     /** Hàm này sử dụng sau khi nó các thành phần đã trộn với NER */
+    /** Bổ sung embedding của các thành phần con theo thứ tự từ cấp thấp lên cấp cao. */
     public void merEmbThanhPhanWithNCon() {
         List<String> thuTu = List.of(
                 "Khoản",
@@ -147,7 +150,9 @@ public class EmbeddingUpdateService {
                         continue;
                     }
 
-                    double trongSoCon = getTrongsotpcontam().getOrDefault(tp.getId(), EmbeddingConfig.A1);
+                    double trongSoCon = getTrongsotpcontam().getOrDefault(
+                            tp.getId(),
+                            EmbeddingConfig.CHILD_COMPONENT_WEIGHT);
 
                     thanhPhanVectorService.addWeightedVector(base, tpcon, trongSoCon);
 
@@ -165,7 +170,8 @@ public class EmbeddingUpdateService {
         }
     }
 
-        public void luuEmbeddingCuoiCung() {
+    // Chuẩn hóa các vector tạm và ghi embedding cuối cùng vào kho dữ liệu.
+    public void luuEmbeddingCuoiCung() {
         List<Map<String, Object>> rows = new ArrayList<>();
 
         for (Map.Entry<String, double[]> entry : embeddingTam.entrySet()) {

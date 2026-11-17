@@ -15,7 +15,7 @@ import com.example.Simple_logic.DTO.NEREntityResponse;
 import com.example.Simple_logic.DTO.NERResponse;
 import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
-import com.example.Simple_logic.Extention.*;
+import com.example.Simple_logic.Extension.*;
 
 import jakarta.transaction.Transactional;
 
@@ -31,6 +31,7 @@ public class NERService {
         this.nerRepo = nerRepo;
     }
     
+    // Gửi văn bản đến Python API và nhận danh sách thực thể NER được trích xuất.
     public  List<NEREntityResponse> exNer(String text) {
         if (text == null || text.isBlank()) {
             return null;   
@@ -50,6 +51,7 @@ public class NERService {
         return response.entities() ;
     }
 
+    // Trích xuất NER, chuẩn hóa tên và lưu hoặc tái sử dụng các node đã tồn tại.
     @Transactional 
     public  List<NER> saveNer(String text) {
         if (text == null || text.isBlank()) {
@@ -67,6 +69,7 @@ public class NERService {
         return  entities;
     }
 
+    // Gom tên NER theo mã thành phần từ các quan hệ đã lưu.
     public Map<String, List<String>> layTatCaNER() {
 
         List<QuanHe> rows = nerRepo.layTatCaNERThuocTP();

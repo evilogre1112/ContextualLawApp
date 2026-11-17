@@ -26,6 +26,7 @@ public class ArticleComponentApi {
         this.embeddingUpdateService = embeddingUpdateService;
     }
     
+    // Phân tích cấu trúc theo mã văn bản và trả về số thành phần được tạo.
     @PostMapping("/{id}/components")
     public ResponseEntity<?> createComponent(@PathVariable String id) {
         try {
@@ -43,6 +44,7 @@ public class ArticleComponentApi {
             return ResponseEntity.internalServerError().body(Map.of("error", message));
         }
     }
+    // Cập nhật embedding tổng hợp cho các thành phần đã lưu.
     @PostMapping("/merge-embedding")
     public ResponseEntity<?> mergeEmbedding() {
         try {

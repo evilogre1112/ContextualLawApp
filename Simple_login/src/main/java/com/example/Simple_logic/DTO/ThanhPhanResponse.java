@@ -1,12 +1,12 @@
 package com.example.Simple_logic.DTO;
 
-public class ThanhPhanRespone {
+public class ThanhPhanResponse {
     private String id;
     private String loai_thanh_phan;
     private int stt;
     private String noi_dung;
 
-    public ThanhPhanRespone() {}
+    public ThanhPhanResponse() {}
 
     public String getId() {
         return id;

@@ -12,7 +12,7 @@ import org.springframework.web.client.RestClient;
 
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DAO.VanBanRepo;
-import com.example.Simple_logic.DTO.ThanhPhanRespone;
+import com.example.Simple_logic.DTO.ThanhPhanResponse;
 import com.example.Simple_logic.Entity.Chuong;
 import com.example.Simple_logic.Entity.Diem;
 import com.example.Simple_logic.Entity.Dieu;
@@ -21,7 +21,8 @@ import com.example.Simple_logic.Entity.Muc;
 import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
-import com.example.Simple_logic.Extention.Ttime;
+import com.example.Simple_logic.Extension.Ttime;
+import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 import com.example.Simple_logic.Service.ner.NERService;
 
@@ -32,6 +33,7 @@ public class ThanhPhanCreationService {
     private final ThanhPhanRepo thanhPhanRepo;
      private final CayThanhPhanCache cayThanhPhanCache;
     private final EmbeddingModelService embeddingModelService; 
+     private final ThanhPhanMapper thanhPhanMapper;
     private final RestClient client = RestClient.builder()
             .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
@@ -41,20 +43,21 @@ public class ThanhPhanCreationService {
                                     NERService nerService,
                                     EmbeddingModelService embeddingModelService,
                                     ThanhPhanRepo thanhPhanRepo,
-                                    CayThanhPhanCache cayThanhPhanCache) {
+                                    CayThanhPhanCache cayThanhPhanCache,
+                                    ThanhPhanMapper thanhPhanMapper) {
         this.vanBanRepo = vanBanRepo;
         this.nerService = nerService;
         this.embeddingModelService = embeddingModelService;
         this.thanhPhanRepo = thanhPhanRepo;
         this.cayThanhPhanCache = cayThanhPhanCache;
+        this.thanhPhanMapper = thanhPhanMapper;
     }
 
-    private void Init(ThanhPhan tp, VanBan vanBan, ThanhPhanRespone response, String id) {
+    // Gán dữ liệu chung, embedding và NER cho một thành phần vừa tạo.
+    private void Init(ThanhPhan tp, VanBan vanBan, ThanhPhanResponse response, String id) {
         tp.setId(id);
-        tp.setStt(response.getStt());
+        thanhPhanMapper.updateFromResponse(response, tp);
         tp.setVanBan(vanBan);
-        tp.setNoiDung(response.getNoi_dung());
-        tp.setLoaithanhphan(response.getLoai_thanh_phan());
 
         tp.setEmbedding(embeddingModelService.embed(tp.getNoiDung()));
 
@@ -62,6 +65,7 @@ public class ThanhPhanCreationService {
         tp.setNers(ner);
     }
 
+    // Phân tích văn bản thành cấu trúc thành phần phân cấp rồi lưu vào kho dữ liệu.
     public int create(String articleId) {
         VanBan saved = vanBanRepo.findById(articleId)
                 .orElseThrow(() -> new RuntimeException("Không tìm thấy văn bản"));
@@ -74,12 +78,12 @@ public class ThanhPhanCreationService {
 
         long start = System.nanoTime();
 
-        List<ThanhPhanRespone> thanhphan = client.post()
+        List<ThanhPhanResponse> thanhphan = client.post()
                 .uri("http://127.0.0.1:8000/Gettp")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of("text", noiDung))
                 .retrieve()
-                .body(new ParameterizedTypeReference<List<ThanhPhanRespone>>() {
+                .body(new ParameterizedTypeReference<List<ThanhPhanResponse>>() {
                 });
 
         Ttime.logTime("Tạo Thành Phần", start);
@@ -97,7 +101,7 @@ public class ThanhPhanCreationService {
 
         start = System.nanoTime();
 
-        for (ThanhPhanRespone newtp : thanhphan) {
+        for (ThanhPhanResponse newtp : thanhphan) {
 
             String loai = newtp.getLoai_thanh_phan();
             String stt = String.valueOf(newtp.getStt());

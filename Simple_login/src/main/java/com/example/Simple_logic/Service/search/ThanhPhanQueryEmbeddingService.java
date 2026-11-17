@@ -22,6 +22,7 @@ public class ThanhPhanQueryEmbeddingService {
         this.embeddingModelService = embeddingModelService;
     }
 
+    // Kết hợp embedding câu truy vấn với NER nếu trích xuất được thực thể.
     public double[] createSearchEmbedding(String query) {
         double[] embeddingGoc = embeddingModelService.embed(query);
 

@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Extention;
+package com.example.Simple_logic.Extension;
 
 public class Ttime {
     private static boolean enabled = false;

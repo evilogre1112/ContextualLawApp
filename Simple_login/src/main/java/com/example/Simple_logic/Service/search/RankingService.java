@@ -11,14 +11,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import com.example.Simple_logic.DTO.Point;
-import com.example.Simple_logic.Extention.Ttime;
+import com.example.Simple_logic.Extension.Ttime;
 
 @Service
-public class RrankingService {
+public class RankingService {
     private final RestClient client = RestClient.builder()
             .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
-    public  List<Integer> Rranking(List<Point> p) {
+    // Gửi điểm ứng viên đến Python API và nhận lại thứ tự xếp hạng.
+    public List<Integer> rank(List<Point> p) {
         if (p == null || p.isEmpty()) {
             return List.of();
         }

@@ -2,7 +2,7 @@ package com.example.Simple_logic.DTO;
 
 import java.time.LocalDate;
 
-public record ArticleRespone(
+public record ArticleResponse(
     String id,
     String noiDung,
     String tenVanBan,
