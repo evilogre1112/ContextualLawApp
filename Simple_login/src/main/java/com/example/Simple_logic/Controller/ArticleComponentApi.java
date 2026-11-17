@@ -1,10 +1,10 @@
 package com.example.Simple_logic.Controller;
 
-import com.example.Simple_logic.Service.EmbeddingService;
+import com.example.Simple_logic.Service.EmbeddingUpdateService;
+import com.example.Simple_logic.Service.ThanhPhanCreationService;
+
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import com.example.Simple_logic.Service.ThanhPhanService;
 
 import java.util.Map;
 
@@ -18,18 +18,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RestController 
 @RequestMapping ("/api/ArticleComponent")
 public class ArticleComponentApi {
-    private final EmbeddingService embeddingService;
-    private final ThanhPhanService thanhPhanService;
+    private final EmbeddingUpdateService embeddingUpdateService;
+    private final ThanhPhanCreationService thanhPhanCreationService;
 
-    public ArticleComponentApi(ThanhPhanService thanhPhanService,EmbeddingService embeddingService) {
-        this.thanhPhanService = thanhPhanService;
-        this.embeddingService = embeddingService;
+    public ArticleComponentApi(ThanhPhanCreationService thanhPhanCreationService,EmbeddingUpdateService embeddingUpdateService) {
+        this.thanhPhanCreationService = thanhPhanCreationService;
+        this.embeddingUpdateService = embeddingUpdateService;
     }
     
     @PostMapping("/{id}/components")
     public ResponseEntity<?> createComponent(@PathVariable String id) {
         try {
-            int total = thanhPhanService.create(id);
+            int total = thanhPhanCreationService.create(id);
             return ResponseEntity.ok(
                 Map.of(
                     "message", "Phân tích cấu trúc văn bản thành công",
@@ -46,7 +46,7 @@ public class ArticleComponentApi {
     @PostMapping("/merge-embedding")
     public ResponseEntity<?> mergeEmbedding() {
         try {
-            embeddingService.capNhatEmbedding();
+            embeddingUpdateService.capNhatEmbedding();
             
             return ResponseEntity.ok(
                 Map.of("message", "Merge embedding thành công")

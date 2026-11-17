@@ -10,14 +10,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Simple_logic.DTO.ThanhPhanRespone;
-import com.example.Simple_logic.Service.ThanhPhanService;
+import com.example.Simple_logic.Service.ThanhPhanSearchService;
 
 @RestController 
 @RequestMapping ("/api/Find")
 public class FindApi {
-    private final ThanhPhanService thanhPhanService;
+    private final ThanhPhanSearchService thanhPhanService;
     
-    public FindApi(ThanhPhanService thanhPhanService) {
+    public FindApi(ThanhPhanSearchService thanhPhanService) {
         this.thanhPhanService = thanhPhanService;
     }
 
@@ -26,7 +26,7 @@ public class FindApi {
             @RequestParam String q,
             @RequestParam(defaultValue = "5") int k) {
 
-        return ResponseEntity.ok(thanhPhanService.search2(q, k));
+        return ResponseEntity.ok(thanhPhanService.search(q, k));
     }
     
 }

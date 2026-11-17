@@ -17,14 +17,16 @@ import jakarta.transaction.Transactional;
 
 @Service 
 public class VanBanService {
-    private final ThanhPhanService thanhPhanService;
+    private final ThanhPhanCreationService thanhPhanCreationService;
     private final VanBanRepo vanBanRepo;
-    private final EmbeddingService embeddingService;
+    private  final EmbeddingUpdateService embeddingUpdateService;
 
-    public VanBanService(VanBanRepo vanBanRepo, ThanhPhanService thanhPhanService, EmbeddingService embeddingService) {
+    public VanBanService(VanBanRepo vanBanRepo, 
+                        ThanhPhanCreationService thanhPhanCreationService,
+                        EmbeddingUpdateService embeddingUpdateService) {
         this.vanBanRepo = vanBanRepo;
-        this.thanhPhanService = thanhPhanService;
-        this.embeddingService = embeddingService;
+        this.thanhPhanCreationService = thanhPhanCreationService;
+        this.embeddingUpdateService = embeddingUpdateService;
     }
     
     @Transactional 
@@ -60,14 +62,14 @@ public class VanBanService {
         }
           
         try{
-            int total = thanhPhanService.create(vanBan.getId());
+            int total = thanhPhanCreationService.create(vanBan.getId());
             msg.add(new AppMessage("success", "Tạo thành phần thành công"));
             msg.add(new AppMessage("totalComponents", total));
         }catch(Exception e){
             throw new RuntimeException("Lỗi phân tích thành phần: " + e.getMessage() ,e);
         }
         try {
-            embeddingService.capNhatEmbedding();
+            embeddingUpdateService.capNhatEmbedding();
 
             msg.add(new AppMessage("success", "Merge embedding thành công"));
 
