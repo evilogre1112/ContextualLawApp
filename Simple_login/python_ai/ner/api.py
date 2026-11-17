@@ -12,7 +12,7 @@ from pydantic import BaseModel
 import sys
 from pathlib import Path
 from threading import Lock
-from embedding_model import get_embedding_model
+from embedding.model import get_embedding_model
 from typing import List
 
 from fastapi import APIRouter, HTTPException
@@ -21,9 +21,9 @@ from pydantic import BaseModel, Field
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# python_ai/ner_xlmr.py lives at ContextualLawApp/Simple_login/python_ai/.
+# python_ai/ner/api.py lives at ContextualLawApp/Simple_login/python_ai/.
 DEFAULT_TRAIN_ROOT = (
-    Path(__file__).resolve().parents[2] / "AI_Train" / "PhoBERT-Legal-NER-main(1)"
+    Path(__file__).resolve().parents[3] / "AI_Train" / "PhoBERT-Legal-NER-main(1)"
 )
 _predictor = None
 _load_lock = Lock()

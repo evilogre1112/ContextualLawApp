@@ -1,10 +1,10 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
-from embedding_model import get_embedding_model
-from ner_xlmr import router as ner_router
-from Gettp import GetThanhPhan
+from embedding.model import get_embedding_model
+from ner.api import router as ner_router
+from document_processing.components import GetThanhPhan
 from typing import Optional
-from Ranking import Rranking, Rranking2
+from ranking.scoring import Rranking, Rranking2
 
 
 # Khởi tạo server FastAPI
