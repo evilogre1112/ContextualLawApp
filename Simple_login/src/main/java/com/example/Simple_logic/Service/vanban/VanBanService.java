@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.vanban;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +11,8 @@ import com.example.Simple_logic.DAO.VanBanRepo;
 import com.example.Simple_logic.DTO.AppMessage;
 import com.example.Simple_logic.DTO.CreateArticleRequest;
 import com.example.Simple_logic.Entity.VanBan;
+import com.example.Simple_logic.Service.embedding.EmbeddingUpdateService;
+import com.example.Simple_logic.Service.thanhphan.ThanhPhanCreationService;
 
 import jakarta.transaction.Transactional;
 

@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.embedding;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -12,6 +12,9 @@ import com.example.Simple_logic.Config.EmbeddingConfig;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Extention.Vvec;
+import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
+import com.example.Simple_logic.Service.ner.NERService;
+import com.example.Simple_logic.Service.ner.NerEmbeddingService;
 
 @Service 
 public class EmbeddingUpdateService {
@@ -19,17 +22,20 @@ public class EmbeddingUpdateService {
     private  final CayThanhPhanCache cayThanhPhanCache;
     private final ThanhPhanRepo thanhPhanRepo ;
     private final NERService nerService;
-    private  final EmbeddingService embeddingService;
+    private final NerEmbeddingService nerEmbeddingService;
+    private final ThanhPhanVectorService thanhPhanVectorService;
     
     
     public EmbeddingUpdateService(CayThanhPhanCache cayThanhPhanCache, 
         ThanhPhanRepo thanhPhanRepo,
         NERService nerService,
-        EmbeddingService embeddingService) {
+        NerEmbeddingService nerEmbeddingService,
+        ThanhPhanVectorService thanhPhanVectorService) {
         this.cayThanhPhanCache = cayThanhPhanCache;
         this.thanhPhanRepo = thanhPhanRepo;
         this.nerService = nerService;
-        this.embeddingService = embeddingService;
+        this.nerEmbeddingService = nerEmbeddingService;
+        this.thanhPhanVectorService = thanhPhanVectorService;
     }
 
     private final Map<String, double[]> embeddingTam = new HashMap<>();
@@ -73,7 +79,8 @@ public class EmbeddingUpdateService {
                     goc = tp.getEmbedding();
                 }
 
-                double[] ner = embeddingService.trungBinhNer(danhSachNER.getOrDefault(tp.getId(), List.of()));
+                double[] ner = nerEmbeddingService.averageNerEmbeddings(
+                        danhSachNER.getOrDefault(tp.getId(), List.of()));
 
                 double trongSoNER = 1.0 - EmbeddingConfig.A0 - EmbeddingConfig.A1;
 
@@ -90,10 +97,10 @@ public class EmbeddingUpdateService {
 
                 double[] v1 = new double[goc.length];
 
-                embeddingService.cong(v1, goc, trongSoGoc);
+                thanhPhanVectorService.addWeightedVector(v1, goc, trongSoGoc);
 
                 if (ner != null) {
-                    embeddingService.cong(v1, ner, trongSoNER);
+                    thanhPhanVectorService.addWeightedVector(v1, ner, trongSoNER);
                 }
 
 
@@ -133,7 +140,8 @@ public class EmbeddingUpdateService {
                         continue;
                     }
 
-                    double[] tpcon = embeddingService.getTrungBinhTPConEmbed(tp, cayThanhPhanCache.get(),embeddingTam);
+                    double[] tpcon = thanhPhanVectorService.averageChildEmbeddings(
+                            tp, cayThanhPhanCache.get(), embeddingTam);
 
                     if (tpcon == null) {
                         continue;
@@ -141,7 +149,7 @@ public class EmbeddingUpdateService {
 
                     double trongSoCon = getTrongsotpcontam().getOrDefault(tp.getId(), EmbeddingConfig.A1);
 
-                    embeddingService.cong(base, tpcon, trongSoCon);
+                    thanhPhanVectorService.addWeightedVector(base, tpcon, trongSoCon);
 
                     getEmbeddingtam().put(tp.getId(), base);
 

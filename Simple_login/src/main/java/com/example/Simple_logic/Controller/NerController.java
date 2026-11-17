@@ -1,7 +1,7 @@
 package com.example.Simple_logic.Controller;
 
 import com.example.Simple_logic.Entity.NER;
-import com.example.Simple_logic.Service.NERService;
+import com.example.Simple_logic.Service.ner.NERService;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.http.ResponseEntity;

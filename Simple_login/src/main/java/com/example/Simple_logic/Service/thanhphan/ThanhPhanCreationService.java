@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.thanhphan;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,6 +22,8 @@ import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Extention.Ttime;
+import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
+import com.example.Simple_logic.Service.ner.NERService;
 
 @Service
 public class ThanhPhanCreationService {

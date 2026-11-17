@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.Simple_logic.DTO.ThanhPhanRespone;
-import com.example.Simple_logic.Service.ThanhPhanSearchService;
+import com.example.Simple_logic.Service.search.ThanhPhanSearchService;
 
 @RestController 
 @RequestMapping ("/api/Find")

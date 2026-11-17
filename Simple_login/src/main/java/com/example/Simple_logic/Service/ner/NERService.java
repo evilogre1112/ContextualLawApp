@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.ner;
 
 import java.util.ArrayList;
 import java.util.HashMap;

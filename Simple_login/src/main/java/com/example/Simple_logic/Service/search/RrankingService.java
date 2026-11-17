@@ -1,4 +1,4 @@
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.search;
 
 import java.util.Arrays;
 import java.util.List;

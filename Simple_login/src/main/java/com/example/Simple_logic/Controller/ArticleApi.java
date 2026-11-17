@@ -1,6 +1,6 @@
 package com.example.Simple_logic.Controller;
 
-import com.example.Simple_logic.Service.VanBanService;
+import com.example.Simple_logic.Service.vanban.VanBanService;
 
 import jakarta.validation.Valid;
 

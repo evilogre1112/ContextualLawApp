@@ -1,7 +1,7 @@
 package com.example.Simple_logic.Controller;
 
-import com.example.Simple_logic.Service.EmbeddingUpdateService;
-import com.example.Simple_logic.Service.ThanhPhanCreationService;
+import com.example.Simple_logic.Service.embedding.EmbeddingUpdateService;
+import com.example.Simple_logic.Service.thanhphan.ThanhPhanCreationService;
 
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;

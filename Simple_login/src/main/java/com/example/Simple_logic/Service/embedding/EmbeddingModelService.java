@@ -1,5 +1,5 @@
 
-package com.example.Simple_logic.Service;
+package com.example.Simple_logic.Service.embedding;
 
 import java.util.List;
 import java.util.Map;

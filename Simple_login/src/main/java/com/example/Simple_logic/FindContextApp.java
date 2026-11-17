@@ -17,7 +17,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 // bắt đầu bằng org.springframework.web.bind.annotation..., làm nhiệm vụ mở các cổng mạng, đón luồn dữ liệu JSON từ Front-end gữi tới và trả về kết quả
 // Các công cụ hay dùng :
 // @Restcontroller : chuyên trả về dữ liệu JSON 
-// @CrossOrigin : ó cho phép frontend ở một origin khác gọi API của backend,API này cho phép request từ origin khác
+// @CrossOrigin : Có cho phép frontend ở một origin khác gọi API của backend,API này cho phép request từ origin khác
 // @PostMapping, @GetMapping: Xác định loại hành động (lấy hoặc gữi dữ liệu) 
 // @RequestBody: Ra lệnh bóc gói JSON từ front-end gán vào biến java 
 // Cách import , import org.springframework.web.bind.annotation.*;
