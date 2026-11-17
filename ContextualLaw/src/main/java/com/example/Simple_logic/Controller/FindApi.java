@@ -1,0 +1,33 @@
+package com.example.Simple_logic.Controller;
+
+
+import java.util.List;
+
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.example.Simple_logic.DTO.ThanhPhanResponse;
+import com.example.Simple_logic.Service.search.ThanhPhanSearchService;
+
+@RestController 
+@RequestMapping ("/api/Find")
+public class FindApi {
+    private final ThanhPhanSearchService thanhPhanService;
+    
+    public FindApi(ThanhPhanSearchService thanhPhanService) {
+        this.thanhPhanService = thanhPhanService;
+    }
+
+   // Tìm các thành phần pháp lý liên quan đến truy vấn và giới hạn số kết quả.
+   @GetMapping
+    public ResponseEntity<List<ThanhPhanResponse>> find(
+            @RequestParam String q,
+            @RequestParam(defaultValue = "5") int k) {
+
+        return ResponseEntity.ok(thanhPhanService.search(q, k));
+    }
+    
+}

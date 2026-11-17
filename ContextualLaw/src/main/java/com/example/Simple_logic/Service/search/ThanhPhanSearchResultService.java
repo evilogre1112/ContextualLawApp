@@ -1,0 +1,73 @@
+package com.example.Simple_logic.Service.search;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Service;
+
+import com.example.Simple_logic.DAO.ThanhPhanRepo;
+import com.example.Simple_logic.DTO.Point;
+import com.example.Simple_logic.DTO.ThanhPhanResponse;
+import com.example.Simple_logic.Entity.ThanhPhan;
+import com.example.Simple_logic.Mapper.ThanhPhanMapper;
+
+@Service
+public class ThanhPhanSearchResultService {
+
+    private final ThanhPhanRepo thanhPhanRepo;
+    private final ThanhPhanMapper thanhPhanMapper;
+
+    public ThanhPhanSearchResultService(
+            ThanhPhanRepo thanhPhanRepo,
+            ThanhPhanMapper thanhPhanMapper) {
+        this.thanhPhanRepo = thanhPhanRepo;
+        this.thanhPhanMapper = thanhPhanMapper;
+    }
+
+    // Chọn thành phần, cha hoặc các con phù hợp nhất dựa trên điểm xếp hạng.
+    public List<ThanhPhanResponse> buildResults(
+            int k,
+            ThanhPhanCandidateSearchService.SearchContext context,
+            ThanhPhanSearchScoringService.ScoringResult scoringResult,
+            List<Integer> ranking) {
+        Map<String, ThanhPhanResponse> results = new LinkedHashMap<>();
+
+        for (int j = 0; j < Math.min(k, ranking.size()); j++) {
+            int index = ranking.get(j);
+            ThanhPhan candidate = context.candidates().get(index);
+            Point scores = scoringResult.points().get(index);
+
+            Double scoreParent = scores.x();
+            Double scoreThis = scores.y();
+            Double scoreChild = scores.z();
+
+            if ((scoreParent == null || scoreThis >= scoreParent)
+                    && (scoreChild == null || scoreThis >= scoreChild)) {
+
+                results.putIfAbsent(candidate.getId(), thanhPhanMapper.toResponse(candidate));
+
+            } else if (scoreParent != null
+                    && (scoreChild == null || scoreParent >= scoreChild)) {
+
+                ThanhPhan parent = scoringResult.parents().get(candidate.getId());
+                if (parent != null) {
+                    results.putIfAbsent(parent.getId(), thanhPhanMapper.toResponse(parent));
+                }
+
+            } else if (scoreChild != null) {
+
+                List<String> childIds = context.descendants().get(candidate.getId());
+                if (childIds != null && !childIds.isEmpty()) {
+                    List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
+                    for (ThanhPhan child : children) {
+                        results.putIfAbsent(child.getId(), thanhPhanMapper.toResponse(child));
+                    }
+                }
+            }
+        }
+
+        return new ArrayList<>(results.values());
+    }
+}
