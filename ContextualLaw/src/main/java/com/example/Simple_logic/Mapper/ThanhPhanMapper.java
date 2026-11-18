@@ -1,5 +1,7 @@
 package com.example.Simple_logic.Mapper;
 
+import java.util.List;
+
 import org.mapstruct.BeanMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
@@ -16,6 +18,13 @@ public interface ThanhPhanMapper {
     @Mapping(target = "loai_thanh_phan", source = "loaithanhphan")
     @Mapping(target = "noi_dung", source = "noiDung")
     ThanhPhanResponse toResponse(ThanhPhan thanhPhan);
+
+    @BeanMapping(ignoreByDefault = true)
+    @Mapping(target = "id", source = "id")
+    @Mapping(target = "stt", source = "stt")
+    @Mapping(target = "loai_thanh_phan", source = "loaithanhphan")
+    @Mapping(target = "noi_dung", source = "noiDung")
+    List<ThanhPhanResponse> toResponses(List<ThanhPhan> entities);
 
     @BeanMapping(ignoreByDefault = true)
     @Mapping(target = "stt", source = "stt")
