@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.Simple_logic.DTO.NEREntityResponse;
+import com.example.Simple_logic.Extension.Normalize;
 import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 
@@ -45,7 +46,8 @@ public class NerEmbeddingService {
     // Tính trung bình các embedding NER sau khi chuẩn hóa từng vector.
     public double[] averageNerEmbeddings(List<String> nerNames) {
         List<String> names = nerNames.stream()
-                .filter(name -> name != null && !name.isBlank())
+                .map(Normalize::chuanHoa)
+                .filter(name -> !name.isBlank())
                 .toList();
         if (names.isEmpty()) {
             return null;

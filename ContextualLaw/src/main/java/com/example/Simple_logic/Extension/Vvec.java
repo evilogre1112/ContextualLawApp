@@ -2,6 +2,7 @@ package com.example.Simple_logic.Extension;
 
 
 public class Vvec {
+    // Tính cosine similarity; trả 0 nếu một vector có độ dài 0.
     public static double cosineSimilarity(double[] a, double[] b) {
         if (a.length != b.length) {
             throw new IllegalStateException(
@@ -28,6 +29,7 @@ public class Vvec {
         return tichVoHuong / (Math.sqrt(normA) * Math.sqrt(normB));
     }
 
+    // Chuẩn hóa vector theo L2; không thể chuẩn hóa vector có độ dài 0.
     public static double[] ChuanHoaVec(double[] v) {
         double norm = 0;
         for (double x : v)

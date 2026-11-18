@@ -53,6 +53,7 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
             @Param("soUngVien") int soUngVien,
             @Param("nguong") double nguong);
 
+    /** Tìm theo embedding gốc với ngưỡng tương đồng mặc định của hệ thống. */
     default List<ThanhPhan> findEmbeddingGoc(double[] embedding, int soUngVien) {
         return findEmbeddingGoc(
                 embedding,
