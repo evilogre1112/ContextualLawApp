@@ -1,5 +1,6 @@
 package com.example.Simple_logic.DAO;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -52,6 +53,18 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
             @Param("embedding") double[] embedding,
             @Param("soUngVien") int soUngVien,
             @Param("nguong") double nguong);
+
+    /** Tìm mã thành phần theo độ tương đồng embedding gốc và sắp xếp theo điểm giảm dần. */
+    @Query("""
+                CALL db.index.vector.queryNodes(
+                    'thanh_phan_embedding_goc', $soUngVien, $embedding
+                )
+                YIELD node, score
+                WHERE score >= $nguong
+                RETURN node.id
+                ORDER BY score DESC
+            """)
+    List<String> findCandidateIdsByEmbeddingGoc(@Param("embedding") double[] embedding,@Param("soUngVien") int soUngVien,@Param("nguong") double nguong);
 
     /** Tìm theo embedding gốc với ngưỡng tương đồng mặc định của hệ thống. */
     default List<ThanhPhan> findEmbeddingGoc(double[] embedding, int soUngVien) {
@@ -127,4 +140,11 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
     // Lấy các thành phần đã có embedding nhưng chưa có embedding gốc.
     @Query("MATCH (t:ThanhPhan) WHERE t.embedding IS NOT NULL AND t.embeddingGoc IS NULL RETURN t")
     List<ThanhPhan> getThanhPhanChuaCoEmbGoc();
+
+    @Query("""
+        MATCH (n:`Thành phần`)
+        WHERE n.id IN $ids
+        RETURN n
+        """)
+    List<ThanhPhan> findAllFlatById(@Param("ids") Collection<String> ids);
 }

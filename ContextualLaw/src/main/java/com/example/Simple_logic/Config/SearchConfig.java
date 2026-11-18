@@ -5,7 +5,7 @@ public final class SearchConfig {
     private SearchConfig() {}
 
     /** Ngưỡng tương đồng tối thiểu để giữ một thành phần trong kết quả tìm kiếm. */
-    public static final double VECTOR_SIMILARITY_THRESHOLD = 0.7;
+    public static final double VECTOR_SIMILARITY_THRESHOLD = 0.65;
     /** Ngưỡng mặc định khi truy vấn vector không truyền ngưỡng riêng. */
     public static final double DEFAULT_VECTOR_SIMILARITY_THRESHOLD = 0.0;
     /** Hệ số nhân số lượng kết quả cần lấy trước khi xếp hạng. */

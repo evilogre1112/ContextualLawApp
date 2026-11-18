@@ -1,5 +1,7 @@
 package com.example.Simple_logic.Service.search;
 
+import java.util.concurrent.CompletableFuture;
+
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 import com.example.Simple_logic.Service.embedding.ThanhPhanVectorService;
 import com.example.Simple_logic.Service.ner.NerEmbeddingService;
@@ -22,27 +24,28 @@ public class ThanhPhanQueryEmbeddingService {
         this.embeddingModelService = embeddingModelService;
     }
 
-    // Kết hợp embedding câu truy vấn với NER nếu trích xuất được thực thể.
+     // Kết hợp embedding câu truy vấn với NER nếu trích xuất được thực thể.
     public double[] createSearchEmbedding(String query) {
-        double[] embeddingGoc = embeddingModelService.embed(query);
+        CompletableFuture<double[]> embedFuture = CompletableFuture.supplyAsync(
+                () -> embeddingModelService.embed(query));
 
+        CompletableFuture<double[]> nerFuture = CompletableFuture.supplyAsync(
+                () -> nerEmbeddingService.embedEntitiesInText(query));
+
+        double[] embeddingGoc = embedFuture.join();
         if (embeddingGoc == null) {
-            throw new IllegalStateException(
-                    "Không tạo được embedding cho truy vấn");
+            throw new IllegalStateException("Không tạo được embedding cho truy vấn");
         }
 
         double[] embeddingTimKiem = embeddingGoc;
-
         try {
-            double[] vectorner = nerEmbeddingService.embedEntitiesInText(query);
-
+            double[] vectorner = nerFuture.join();
             if (vectorner != null) {
-                embeddingTimKiem =
-                        thanhPhanVectorService.mixSearchEmbedding(embeddingGoc, vectorner);
+                embeddingTimKiem = thanhPhanVectorService.mixSearchEmbedding(embeddingGoc, vectorner);
             }
         } catch (Exception e) {
-            System.err.println(
-                    "Bỏ qua NER của câu hỏi: " + e.getMessage());
+            Throwable cause = e.getCause() != null ? e.getCause() : e;
+            System.err.println("Bỏ qua NER của câu hỏi: " + cause.getMessage());
         }
 
         return embeddingTimKiem;

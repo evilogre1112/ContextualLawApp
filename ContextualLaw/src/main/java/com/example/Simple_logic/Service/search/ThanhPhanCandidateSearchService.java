@@ -31,11 +31,12 @@ public class ThanhPhanCandidateSearchService {
         int soUngVien = Math.max(
                 k * SearchConfig.CANDIDATE_MULTIPLIER,
                 SearchConfig.MIN_CANDIDATE_COUNT);
-        List<ThanhPhan> candidates =
-                thanhPhanRepo.findEmbeddingGoc(
+        List<String> candidateIds =
+                thanhPhanRepo.findCandidateIdsByEmbeddingGoc(
                         embeddingTimKiem,
                         soUngVien,
                         SearchConfig.VECTOR_SIMILARITY_THRESHOLD);
+        List<ThanhPhan> candidates = cayThanhPhanCache.getThanhPhanByIds(candidateIds);
 
         Map<String, List<String>> descendants = cayThanhPhanCache.get();
         Set<String> childIds = new HashSet<>();
@@ -48,7 +49,7 @@ public class ThanhPhanCandidateSearchService {
 
         Map<String, double[]> childEmbeddings = new HashMap<>();
         if (!childIds.isEmpty()) {
-            for (ThanhPhan child : thanhPhanRepo.findAllById(childIds)) {
+            for (ThanhPhan child : cayThanhPhanCache.getThanhPhanByIds(childIds)) {
                 if (child.getEmbedding() != null) {
                     childEmbeddings.put(child.getId(), child.getEmbedding());
                 }

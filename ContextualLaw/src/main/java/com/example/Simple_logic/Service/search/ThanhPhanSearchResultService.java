@@ -7,22 +7,22 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
-import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.DTO.ThanhPhanResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Mapper.ThanhPhanMapper;
+import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 
 @Service
 public class ThanhPhanSearchResultService {
 
-    private final ThanhPhanRepo thanhPhanRepo;
+    private final CayThanhPhanCache cayThanhPhanCache;
     private final ThanhPhanMapper thanhPhanMapper;
 
     public ThanhPhanSearchResultService(
-            ThanhPhanRepo thanhPhanRepo,
+            CayThanhPhanCache cayThanhPhanCache,
             ThanhPhanMapper thanhPhanMapper) {
-        this.thanhPhanRepo = thanhPhanRepo;
+        this.cayThanhPhanCache = cayThanhPhanCache;
         this.thanhPhanMapper = thanhPhanMapper;
     }
 
@@ -60,7 +60,7 @@ public class ThanhPhanSearchResultService {
 
                 List<String> childIds = context.descendants().get(candidate.getId());
                 if (childIds != null && !childIds.isEmpty()) {
-                    List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
+                    List<ThanhPhan> children = cayThanhPhanCache.getThanhPhanByIds(childIds);
                     for (ThanhPhan child : children) {
                         results.putIfAbsent(child.getId(), child);
                     }

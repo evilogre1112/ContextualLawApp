@@ -1,4 +1,5 @@
 @echo off
+if defined JAVA_HOME if exist "%JAVA_HOME%\bin\java.exe" set "PATH=%JAVA_HOME%\bin;%PATH%"
 cd /d "%~dp0"
 
 python scripts\setup_torch.py

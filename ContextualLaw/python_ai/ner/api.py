@@ -8,7 +8,8 @@ We intentionally DO NOT reimplement any of those steps here.
 import importlib
 import logging
 import os
-from pydantic import BaseModel
+import re
+import subprocess
 import sys
 from pathlib import Path
 from threading import Lock
@@ -76,6 +77,68 @@ def _native_class(root: Path):
     return vi_tagger
 
 
+def _java_major_version(java_exe: str) -> int:
+    try:
+        proc = subprocess.run(
+            [java_exe, "-version"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        output = f"{proc.stdout}\n{proc.stderr}"
+        match = re.search(r'version "(\d+)(?:\.(\d+))?', output)
+        if not match:
+            return 0
+        major = int(match.group(1))
+        if major == 1 and match.group(2):
+            return int(match.group(2))
+        return major
+    except Exception:
+        return 0
+
+
+def _ensure_modern_java_on_path():
+    """Ensure a Java 11+ runtime is first on PATH on Windows (Java 8 fails on Unicode user paths)."""
+    if _java_major_version("java") >= 11:
+        return
+
+    candidates = []
+    java_home = os.environ.get("JAVA_HOME")
+    if java_home:
+        candidates.append(Path(java_home) / "bin")
+
+    program_files = [
+        Path(os.environ.get("ProgramFiles", r"C:\Program Files")),
+        Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")),
+    ]
+    for base in program_files:
+        for vendor in ("Java", "Eclipse Adoptium", "Microsoft", "Zulu", "Amazon Corretto"):
+            vendor_dir = base / vendor
+            if vendor_dir.is_dir():
+                for child in vendor_dir.iterdir():
+                    bin_dir = child / "bin"
+                    if (bin_dir / "java.exe").is_file():
+                        candidates.append(bin_dir)
+
+    best_dir = None
+    best_ver = 10
+    for bin_dir in candidates:
+        java_exe = bin_dir / "java.exe"
+        if not java_exe.is_file():
+            continue
+        ver = _java_major_version(str(java_exe))
+        if ver > best_ver:
+            best_ver = ver
+            best_dir = bin_dir
+
+    if best_dir is not None:
+        current_path = os.environ.get("PATH", "")
+        if str(best_dir) not in current_path:
+            os.environ["PATH"] = f"{best_dir};{current_path}"
+        logger.info("Using Java %d from %s for VnCoreNLP", best_ver, best_dir)
+
+
 class NativePredictor:
     """Use ViTagger's ORIGINAL predict code with absolute external model paths.
 
@@ -98,6 +161,8 @@ class NativePredictor:
             # create its temporary Unix-domain socket in the default user temp
             # path. Use the short Windows temp path before Java is launched.
             if os.name == "nt":
+                _ensure_modern_java_on_path()
+
                 socket_tmp = Path(os.environ.get("SystemRoot", r"C:\Windows")) / "Temp"
                 socket_tmp.mkdir(parents=True, exist_ok=True)
                 probe = socket_tmp / f"ner-java-temp-{os.getpid()}.tmp"
@@ -148,19 +213,6 @@ class NativePredictor:
         # CRITICAL: pass the complete original user input to ViTagger.__call__.
         # ViTagger handles Vietnamese segmentation and BIO decoding internally.
         with self.lock:
-            import torch
-            if self.engine.device == "xpu":
-                free, total = torch.xpu.memory.mem_get_info()
-                allocated = torch.xpu.memory.memory_allocated()
-                reserved = torch.xpu.memory.memory_reserved()
-
-                logger.info(
-                    "XPU: free=%.2f/%.2f GB, allocated=%.2f GB, reserved=%.2f GB",
-                    free / 1024**3,
-                    total / 1024**3,
-                    allocated / 1024**3,
-                    reserved / 1024**3,
-                )
             native_entities = self.engine(raw_text)
         entities = []
         for entity in native_entities:

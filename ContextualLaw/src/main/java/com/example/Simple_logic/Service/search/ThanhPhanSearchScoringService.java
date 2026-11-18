@@ -2,28 +2,30 @@ package com.example.Simple_logic.Service.search;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 
-import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.embedding.ThanhPhanVectorService;
+import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 
 @Service
 public class ThanhPhanSearchScoringService {
 
-    private final ThanhPhanRepo thanhPhanRepo;
     private final ThanhPhanVectorService thanhPhanVectorService;
+    private final CayThanhPhanCache cayThanhPhanCache;
 
     public ThanhPhanSearchScoringService(
-            ThanhPhanRepo thanhPhanRepo,
-            ThanhPhanVectorService thanhPhanVectorService) {
-        this.thanhPhanRepo = thanhPhanRepo;
+            ThanhPhanVectorService thanhPhanVectorService,
+            CayThanhPhanCache cayThanhPhanCache) {
         this.thanhPhanVectorService = thanhPhanVectorService;
+        this.cayThanhPhanCache = cayThanhPhanCache ;
     }
 
     // Tính điểm tương đồng của từng ứng viên, thành phần cha và các thành phần con.
@@ -32,11 +34,24 @@ public class ThanhPhanSearchScoringService {
             double[] embeddingTimKiem) {
         List<Point> points = new ArrayList<>();
         Map<String, ThanhPhan> parents = new HashMap<>();
-
+        Set<String> parentIds = new HashSet<>();
+        for (ThanhPhan candidate : context.candidates()) {
+            String parentId = cayThanhPhanCache.getParentId(candidate.getId());
+            if (parentId != null) {
+                parentIds.add(parentId);
+            }
+        }
+        Map<String, ThanhPhan> parentById = new HashMap<>();
+        if (!parentIds.isEmpty()) {
+            for (ThanhPhan p : cayThanhPhanCache.getThanhPhanByIds(parentIds)) {
+                parentById.put(p.getId(), p);
+            }
+        }       
         for (ThanhPhan candidate : context.candidates()) {
             double scoreThis = Vvec.cosineSimilarity(
                     candidate.getEmbeddingGoc(), embeddingTimKiem);
-            ThanhPhan parent = thanhPhanRepo.getParent(candidate.getId());
+            String parentId = cayThanhPhanCache.getParentId(candidate.getId());
+            ThanhPhan parent = parentId != null ? parentById.get(parentId) : null;
             parents.put(candidate.getId(), parent);
 
             Double scoreParent = 0.0;

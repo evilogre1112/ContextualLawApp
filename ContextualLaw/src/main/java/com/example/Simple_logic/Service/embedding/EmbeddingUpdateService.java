@@ -193,6 +193,7 @@ public class EmbeddingUpdateService {
         if (!rows.isEmpty()) {
             thanhPhanRepo.updateAll(rows);
         }
+        cayThanhPhanCache.reload();
 
         System.out.println(
                 "Đã lưu " + rows.size() + " embedding cuối cùng.");
