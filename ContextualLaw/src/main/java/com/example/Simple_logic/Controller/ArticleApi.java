@@ -38,12 +38,14 @@ public class ArticleApi
         this.articleMapper = articleMapper;
     }
 
+    // Tạo văn bản, phân tích cấu trúc và cập nhật embedding thông qua service.
     @PostMapping
     public ResponseEntity<?> addArticle(@Valid @RequestBody CreateArticleRequest request ){
 
         return vanBanService.create(request);
     }
 
+    // Lấy danh sách văn bản theo trang và ánh xạ sang DTO phản hồi.
     @GetMapping
     public ResponseEntity<?> getArticle(@Valid  @ModelAttribute ArticleRequest request){
         Pageable pageable = PageRequest.of(

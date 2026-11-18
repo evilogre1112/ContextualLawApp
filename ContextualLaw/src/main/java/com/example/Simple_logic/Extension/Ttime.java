@@ -6,6 +6,7 @@ public class Ttime {
         enabled = value;
     }
     
+    // Ghi thời gian tính từ start nếu chế độ đo đã được bật.
     public static void logTime(String name, long start) {
         if (!enabled) return;
         long end = System.nanoTime();

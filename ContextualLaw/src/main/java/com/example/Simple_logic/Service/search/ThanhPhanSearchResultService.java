@@ -32,7 +32,7 @@ public class ThanhPhanSearchResultService {
             ThanhPhanCandidateSearchService.SearchContext context,
             ThanhPhanSearchScoringService.ScoringResult scoringResult,
             List<Integer> ranking) {
-        Map<String, ThanhPhanResponse> results = new LinkedHashMap<>();
+        Map<String, ThanhPhan> results = new LinkedHashMap<>();
 
         for (int j = 0; j < Math.min(k, ranking.size()); j++) {
             int index = ranking.get(j);
@@ -46,14 +46,14 @@ public class ThanhPhanSearchResultService {
             if ((scoreParent == null || scoreThis >= scoreParent)
                     && (scoreChild == null || scoreThis >= scoreChild)) {
 
-                results.putIfAbsent(candidate.getId(), thanhPhanMapper.toResponse(candidate));
+                results.putIfAbsent(candidate.getId(), candidate);
 
             } else if (scoreParent != null
                     && (scoreChild == null || scoreParent >= scoreChild)) {
 
                 ThanhPhan parent = scoringResult.parents().get(candidate.getId());
                 if (parent != null) {
-                    results.putIfAbsent(parent.getId(), thanhPhanMapper.toResponse(parent));
+                    results.putIfAbsent(parent.getId(), parent);
                 }
 
             } else if (scoreChild != null) {
@@ -62,12 +62,12 @@ public class ThanhPhanSearchResultService {
                 if (childIds != null && !childIds.isEmpty()) {
                     List<ThanhPhan> children = thanhPhanRepo.findAllById(childIds);
                     for (ThanhPhan child : children) {
-                        results.putIfAbsent(child.getId(), thanhPhanMapper.toResponse(child));
+                        results.putIfAbsent(child.getId(), child);
                     }
                 }
             }
         }
 
-        return new ArrayList<>(results.values());
+        return thanhPhanMapper.toResponses(new ArrayList<>(results.values()));
     }
 }

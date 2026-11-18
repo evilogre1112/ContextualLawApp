@@ -16,6 +16,7 @@ import com.example.Simple_logic.DTO.NERResponse;
 import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Extension.*;
+import com.example.Simple_logic.Mapper.NERMapper;
 
 import jakarta.transaction.Transactional;
 
@@ -24,11 +25,13 @@ import org.springframework.http.MediaType;
 @Service 
 public class NERService {
     private final NerRepo nerRepo;
+    private final NERMapper nerMapper;
     private final RestClient client = RestClient.builder()
                                                 .requestFactory(new SimpleClientHttpRequestFactory())
                                                 .build();
-    public NERService(NerRepo nerRepo) {
+    public NERService(NerRepo nerRepo, NERMapper nerMapper) {
         this.nerRepo = nerRepo;
+        this.nerMapper = nerMapper;
     }
     
     // Gửi văn bản đến Python API và nhận danh sách thực thể NER được trích xuất.
@@ -59,14 +62,16 @@ public class NERService {
         }
         List<NEREntityResponse> response = exNer(text);
         long start = System.nanoTime();
-        List<NER> entities = response.stream()
-                                    .map(item -> nerRepo.add(new NER(
-                                        null,
-                                        item.label(),
-                                        Normalize.normalizeName(item.text())
-                                    ))).toList();
-         Ttime.logTime("Lưu NER", start);
-        return  entities;
+        List<NER> entities = new ArrayList<>();
+        for (NEREntityResponse item : response) {
+            String name = Normalize.chuanHoa(item.text());
+            if (name.isBlank()) {
+                continue;
+            }
+            entities.add(nerRepo.add(nerMapper.toEntity(item, name)));
+        }
+        Ttime.logTime("Lưu NER", start);
+        return entities;
     }
 
     // Gom tên NER theo mã thành phần từ các quan hệ đã lưu.
