@@ -109,15 +109,17 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
     @Query("""
             MATCH (n:`Thành phần`)-[r]->(b:`Thành phần`)
             WHERE n.id = $id
-            RETURN b
+                AND type(r) IN ['Thuộc Chương','Thuộc Mục','Thuộc Điều','Thuộc Khoản']
+            RETURN DISTINCT b
             """)
     ThanhPhan getParent(String id);
 
     // Lấy các thành phần con trực tiếp của thành phần có mã được cung cấp.
     @Query("""
-            MATCH (n:`Thành phần`)<-[r]-(b)
+            MATCH (n:`Thành phần`)<-[r]-(b:`Thành phần`)
             WHERE n.id = $id
-            RETURN b
+                AND type(r) IN ['Thuộc Chương','Thuộc Mục','Thuộc Điều','Thuộc Khoản']
+            RETURN DISTINCT b
             """)
     List<ThanhPhan> getChild(String id);
 
