@@ -32,10 +32,8 @@ public class ThanhPhanSearchService {
     // Điều phối tạo embedding, tìm ứng viên, chấm điểm, xếp hạng và dựng kết quả.
     public List<ThanhPhanResponse> search(String query, int k) {
         double[] embeddingTimKiem = queryEmbeddingService.createSearchEmbedding(query);
-        ThanhPhanCandidateSearchService.SearchContext context =
-                candidateSearchService.findCandidates(embeddingTimKiem, k);
-        ThanhPhanSearchScoringService.ScoringResult scoringResult =
-                searchScoringService.score(context, embeddingTimKiem);
+        ThanhPhanCandidateSearchService.SearchContext context = candidateSearchService.findCandidates(embeddingTimKiem, k);
+        ThanhPhanSearchScoringService.ScoringResult scoringResult = searchScoringService.score(context, embeddingTimKiem);
         List<Point> rankingPoints = scoringResult.points();
         List<Integer> ranking = rankingService.rank(rankingPoints);
 

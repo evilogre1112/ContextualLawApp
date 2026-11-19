@@ -48,8 +48,7 @@ public class ThanhPhanSearchScoringService {
             }
         }       
         for (ThanhPhan candidate : context.candidates()) {
-            double scoreThis = Vvec.cosineSimilarity(
-                    candidate.getEmbeddingGoc(), embeddingTimKiem);
+            double scoreThis = Vvec.cosineSimilarity(candidate.getEmbeddingGoc(), embeddingTimKiem);
             String parentId = cayThanhPhanCache.getParentId(candidate.getId());
             ThanhPhan parent = parentId != null ? parentById.get(parentId) : null;
             parents.put(candidate.getId(), parent);
