@@ -1,6 +1,7 @@
 package com.example.Simple_logic.DAO;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
@@ -50,6 +51,15 @@ public interface NerRepo extends Neo4jRepository<NER, String> {
             RETURN DISTINCT t.id AS tpId, n.`Tên NER` AS ten
     """)
     List<QuanHe> layTatCaNERThuocTP(); 
+
+    @Query("""
+            MATCH (t:`Thành phần`)-[:`Nhắc đến NER`]->(n:`NER`)
+            WHERE n.`Tên NER` IS NOT NULL
+            AND t.`id` = $id
+            AND trim(n.`Tên NER`) <> ''
+            RETURN DISTINCT n     
+    """)
+    List<NER> getNERS(@Param("ids") String id);
 
 
 }

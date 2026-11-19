@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
 
 /** Chuyển yêu cầu NER sang dịch vụ Python; không ghi dữ liệu vào Neo4j. */
 @RestController
@@ -26,4 +29,10 @@ public class NerController {
         List<NER> ner = nerService.saveNer(request);
        return ResponseEntity.ok(ner);
     }
+
+    @GetMapping("/getNER")
+    public ResponseEntity<List<NER>> getNERFromThanhPhan(@RequestParam String id) {
+        return ResponseEntity.ok(nerService.getNER(id));
+    }
+    
 }

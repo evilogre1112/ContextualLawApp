@@ -88,4 +88,9 @@ public class NERService {
 
         return ketQua;
     }
+
+    public List<NER> getNER(String id){
+        if (id == null || id.isBlank()) return List.of();
+        return nerRepo.getNERS(id);
+    }
 }
