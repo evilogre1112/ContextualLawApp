@@ -114,8 +114,8 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
     @Query("""
                 UNWIND $rows AS row
                 MATCH (t:`Thành phần` {id: row.id})
-                SET t.EmbeddingGoc = coalesce(t.EmbeddingGoc, t.Embedding),
-                    t.Embedding = row.emb
+                SET t.EmbeddingGoc = coalesce(row.EmbeddingGoc, t.EmbeddingGoc, t.Embedding),
+                    t.Embedding =  coalesce(row.Embedding, t.Embedding)
             """)
     void updateAll(@Param("rows") List<Map<String, Object>> rows);
 

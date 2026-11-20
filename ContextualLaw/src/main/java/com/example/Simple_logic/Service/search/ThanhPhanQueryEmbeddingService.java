@@ -2,6 +2,7 @@ package com.example.Simple_logic.Service.search;
 
 import java.util.concurrent.CompletableFuture;
 
+import com.example.Simple_logic.Extension.Normalize;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 import com.example.Simple_logic.Service.embedding.ThanhPhanVectorService;
 import com.example.Simple_logic.Service.ner.NerEmbeddingService;
@@ -27,7 +28,7 @@ public class ThanhPhanQueryEmbeddingService {
      // Kết hợp embedding câu truy vấn với NER nếu trích xuất được thực thể.
     public double[] createSearchEmbedding(String query) {
         CompletableFuture<double[]> embedFuture = CompletableFuture.supplyAsync(
-                () -> embeddingModelService.embed(query));
+                () -> embeddingModelService.embed(Normalize.chuanHoa(query)));
 
         CompletableFuture<double[]> nerFuture = CompletableFuture.supplyAsync(
                 () -> nerEmbeddingService.embedEntitiesInText(query));

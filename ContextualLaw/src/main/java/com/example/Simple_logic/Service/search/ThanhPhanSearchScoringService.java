@@ -29,9 +29,7 @@ public class ThanhPhanSearchScoringService {
     }
 
     // Tính điểm tương đồng của từng ứng viên, thành phần cha và các thành phần con.
-    public ScoringResult score(
-            ThanhPhanCandidateSearchService.SearchContext context,
-            double[] embeddingTimKiem) {
+    public ScoringResult score(ThanhPhanCandidateSearchService.SearchContext context,double[] embeddingTimKiem) {
         List<Point> points = new ArrayList<>();
         Map<String, ThanhPhan> parents = new HashMap<>();
         Set<String> parentIds = new HashSet<>();
@@ -48,7 +46,8 @@ public class ThanhPhanSearchScoringService {
             }
         }       
         for (ThanhPhan candidate : context.candidates()) {
-            double scoreThis = Vvec.cosineSimilarity(candidate.getEmbeddingGoc(), embeddingTimKiem);
+            double scoreThis = Vvec.cosineSimilarity(
+                    candidate.getEmbeddingGoc(), embeddingTimKiem);
             String parentId = cayThanhPhanCache.getParentId(candidate.getId());
             ThanhPhan parent = parentId != null ? parentById.get(parentId) : null;
             parents.put(candidate.getId(), parent);

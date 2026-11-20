@@ -21,6 +21,7 @@ import com.example.Simple_logic.Entity.Muc;
 import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
+import com.example.Simple_logic.Extension.Normalize;
 import com.example.Simple_logic.Extension.Ttime;
 import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
@@ -31,9 +32,9 @@ public class ThanhPhanCreationService {
     private final VanBanRepo vanBanRepo;
     private final NERService nerService;
     private final ThanhPhanRepo thanhPhanRepo;
-     private final CayThanhPhanCache cayThanhPhanCache;
+    private final CayThanhPhanCache cayThanhPhanCache;
     private final EmbeddingModelService embeddingModelService; 
-     private final ThanhPhanMapper thanhPhanMapper;
+    private final ThanhPhanMapper thanhPhanMapper;
     private final RestClient client = RestClient.builder()
             .requestFactory(new SimpleClientHttpRequestFactory())
             .build();
@@ -59,7 +60,7 @@ public class ThanhPhanCreationService {
         thanhPhanMapper.updateFromResponse(response, tp);
         tp.setVanBan(vanBan);
 
-        tp.setEmbedding(embeddingModelService.embed(tp.getNoiDung()));
+        tp.setEmbedding(embeddingModelService.embed(Normalize.chuanHoa(tp.getNoiDung())));
 
         List<NER> ner = nerService.saveNer(tp.getNoiDung());
         tp.setNers(ner);
@@ -67,8 +68,7 @@ public class ThanhPhanCreationService {
 
     // Phân tích văn bản thành cấu trúc thành phần phân cấp rồi lưu vào kho dữ liệu.
     public int create(String articleId) {
-        VanBan saved = vanBanRepo.findById(articleId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy văn bản"));
+        VanBan saved = vanBanRepo.findById(articleId).orElseThrow(() -> new RuntimeException("Không tìm thấy văn bản"));
 
         String noiDung = saved.getNoiDung();
 
@@ -125,9 +125,7 @@ public class ThanhPhanCreationService {
                 case "Mục" -> {
                     muc = new Muc();
 
-                    String parentId = (chuong != null)
-                            ? chuong.getId()
-                            : saved.getId();
+                    String parentId = (chuong != null) ? chuong.getId() : saved.getId();
 
                     String id = parentId + "/M" + stt;
 
