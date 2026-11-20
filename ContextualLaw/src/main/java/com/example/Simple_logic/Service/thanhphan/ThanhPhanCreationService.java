@@ -26,13 +26,14 @@ import com.example.Simple_logic.Extension.Ttime;
 import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 import com.example.Simple_logic.Service.embedding.EmbeddingModelService;
 import com.example.Simple_logic.Service.ner.NERService;
+import com.example.Simple_logic.Service.search.SearchIndexSyncService;
 
 @Service
 public class ThanhPhanCreationService {
     private final VanBanRepo vanBanRepo;
     private final NERService nerService;
     private final ThanhPhanRepo thanhPhanRepo;
-    private final CayThanhPhanCache cayThanhPhanCache;
+    private final SearchIndexSyncService searchIndexSyncService;
     private final EmbeddingModelService embeddingModelService; 
     private final ThanhPhanMapper thanhPhanMapper;
     private final RestClient client = RestClient.builder()
@@ -44,13 +45,13 @@ public class ThanhPhanCreationService {
                                     NERService nerService,
                                     EmbeddingModelService embeddingModelService,
                                     ThanhPhanRepo thanhPhanRepo,
-                                    CayThanhPhanCache cayThanhPhanCache,
+                                    SearchIndexSyncService searchIndexSyncService,
                                     ThanhPhanMapper thanhPhanMapper) {
         this.vanBanRepo = vanBanRepo;
         this.nerService = nerService;
         this.embeddingModelService = embeddingModelService;
         this.thanhPhanRepo = thanhPhanRepo;
-        this.cayThanhPhanCache = cayThanhPhanCache;
+        this.searchIndexSyncService = searchIndexSyncService;
         this.thanhPhanMapper = thanhPhanMapper;
     }
 
@@ -206,7 +207,7 @@ public class ThanhPhanCreationService {
         start = System.nanoTime();
 
         thanhPhanRepo.saveAll(all);
-        cayThanhPhanCache.reload();
+        searchIndexSyncService.reloadAll();
 
         Ttime.logTime("Lưu thành phần", start);
 

@@ -17,6 +17,7 @@ import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 import com.example.Simple_logic.Service.ner.NERService;
 import com.example.Simple_logic.Service.ner.NerEmbeddingService;
+import com.example.Simple_logic.Service.search.SearchIndexSyncService;
 
 @Service 
 public class EmbeddingUpdateService {
@@ -27,6 +28,7 @@ public class EmbeddingUpdateService {
     private final NERService nerService;
     private final NerEmbeddingService nerEmbeddingService;
     private final ThanhPhanVectorService thanhPhanVectorService;
+    private final SearchIndexSyncService searchIndexSyncService;
     
     
     public EmbeddingUpdateService(CayThanhPhanCache cayThanhPhanCache, 
@@ -34,13 +36,15 @@ public class EmbeddingUpdateService {
         NERService nerService,
         NerEmbeddingService nerEmbeddingService,
         ThanhPhanVectorService thanhPhanVectorService, 
-        EmbeddingModelService embeddingModelService) {
+        EmbeddingModelService embeddingModelService,
+        SearchIndexSyncService searchIndexSyncService) {
         this.cayThanhPhanCache = cayThanhPhanCache;
         this.thanhPhanRepo = thanhPhanRepo;
         this.nerService = nerService;
         this.nerEmbeddingService = nerEmbeddingService;
         this.thanhPhanVectorService = thanhPhanVectorService;
         this.embeddingModelService = embeddingModelService;
+        this.searchIndexSyncService = searchIndexSyncService;
     }
 
     private final Map<String, double[]> embeddingTam = new HashMap<>();
@@ -237,7 +241,7 @@ public class EmbeddingUpdateService {
         if (!rows.isEmpty()) {
             thanhPhanRepo.updateAll(rows);
         }
-        cayThanhPhanCache.reload();
+        searchIndexSyncService.reloadAll();
 
         System.out.println(
                 "Đã lưu " + rows.size() + " embedding cuối cùng.");

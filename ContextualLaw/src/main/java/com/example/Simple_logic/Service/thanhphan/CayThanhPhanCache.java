@@ -88,4 +88,9 @@ public class CayThanhPhanCache {
         }
         return result;
     }
+
+    /** Trả về toàn bộ thành phần đang có trong cache. */
+    public Collection<ThanhPhan> getAllThanhPhan() {
+        return List.copyOf(thanhPhanById.values());
+    }
 }

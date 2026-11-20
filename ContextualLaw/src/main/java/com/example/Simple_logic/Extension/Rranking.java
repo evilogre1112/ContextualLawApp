@@ -26,35 +26,12 @@ public class Rranking {
             return List.of();
         }
 
+        double[] s3dScores = score3D(listRelevant);
         List<ScoredIndex> scoredPoints = new ArrayList<>(listRelevant.size());
-
-        for (int i = 0; i < listRelevant.size(); i++) {
-            Point point = listRelevant.get(i);
-            if (point == null) {
-                continue;
+        for (int i = 0; i < s3dScores.length; i++) {
+            if (s3dScores[i] >= 0.0) {
+                scoredPoints.add(new ScoredIndex(s3dScores[i], i));
             }
-
-            List<Double> valid = extractNonZeroValues(point);
-            if (hasNegative(valid)) {
-                continue;
-            }
-
-            if (valid.isEmpty()) {
-                scoredPoints.add(new ScoredIndex(0.0, i));
-                continue;
-            }
-
-            if (valid.size() == 1) {
-                valid.add(valid.get(0));
-            }
-
-            if (valid.size() == 2) {
-                double s2d = transform2D(valid.get(0), valid.get(1));
-                valid.add(s2d);
-            }
-
-            double s3d = transform3D(valid.get(0), valid.get(1), valid.get(2));
-            scoredPoints.add(new ScoredIndex(s3d, i));
         }
 
         scoredPoints.sort(Comparator.comparingDouble(ScoredIndex::score).reversed());
@@ -86,7 +63,7 @@ public class Rranking {
         return false;
     }
 
-    private static double transform2D(double x, double y) {
+    public static double transform2D(double x, double y) {
         double a0 = x * x;
         double b0 = y * y;
         double t0 = a0 + b0;
@@ -107,5 +84,37 @@ public class Rranking {
             g += (1.0 / 3.0) * Math.cbrt((a0 + g) * (b0 + g) * (c0 + g));
         }
         return Math.cbrt(t0 + 3.0 * g) / NORM_3;
+    }
+
+    public static double[] score3D(List<Point> listRelevant) {
+    if (listRelevant == null || listRelevant.isEmpty()) {
+        return new double[0];
+    }
+    /** Tính điểm Rranking 3D cho từng điểm theo đúng thứ tự danh sách đầu vào. */
+    double[] scores = new double[listRelevant.size()];
+        for (int i = 0; i < listRelevant.size(); i++) {
+            Point point = listRelevant.get(i);
+            if (point == null) {
+                scores[i] = -1.0;
+                continue;
+            }
+            List<Double> valid = extractNonZeroValues(point);
+            if (hasNegative(valid)) {
+                scores[i] = -1.0;
+                continue;
+            }
+            if (valid.isEmpty()) {
+                scores[i] = 0.0;
+                continue;
+            }
+            if (valid.size() == 1) {
+                valid.add(valid.get(0));
+            }
+            if (valid.size() == 2) {
+                valid.add(transform2D(valid.get(0), valid.get(1)));
+            }
+            scores[i] = transform3D(valid.get(0), valid.get(1), valid.get(2));
+        }
+        return scores;
     }
 }
