@@ -48,3 +48,7 @@ benchmark/
 __pycache__/
 *.py[cod]
 
+### Logs ###
+logs/
+*.log
+
