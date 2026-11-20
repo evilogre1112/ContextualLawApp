@@ -13,17 +13,6 @@ import com.example.Simple_logic.Extension.Ttime;
 @Service
 public class RankingService {
 
-    // Xếp hạng trực tiếp bằng thuật toán Rranking trong Java Extension.
-    public List<Integer> rank(List<Point> p) {
-        if (p == null || p.isEmpty()) {
-            return List.of();
-        }
-        long start = System.nanoTime();
-        List<Integer> ranking = Rranking.rank(p);
-        Ttime.logTime("Xếp hạng", start);
-        return ranking;
-    }
-
     public List<Integer> rankHybrid(List<Point> p, double[] bm25Scores){
         if (p == null || p.isEmpty()) {
             return List.of();

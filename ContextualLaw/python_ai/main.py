@@ -6,7 +6,6 @@ from embedding.model import get_embedding_model
 from ner.api import router as ner_router, get_predictor
 from document_processing.components import GetThanhPhan
 from typing import Optional
-from ranking.scoring import Rranking, Rranking2
 
 logger = logging.getLogger(__name__)
 
@@ -49,12 +48,4 @@ def get_thanh_phan(request: TextRequest):
         return []
 
     return GetThanhPhan(input_text)
-
-class ListPoint(BaseModel):
-    ListPoints: list[list[float | None]]
-
-@app.post("/Rranking")
-def get_ranking(data: ListPoint):
-    if(not data.ListPoints): return {"Ranking": []}
-    return {"Ranking": Rranking(data.ListPoints)}
 

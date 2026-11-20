@@ -22,27 +22,6 @@ public class NerEmbeddingService {
         this.embeddingModelService = embeddingModelService;
     }
 
-    // Tái sử dụng embedding đã lưu và chỉ gọi mô hình cho các tên NER còn thiếu.
-    private List<double[]> embedWithCache(List<String> nerNames) {
-        List<String> notCached = nerNames.stream()
-                .filter(name -> !embeddingModelService.getEmbeddingCache().containsKey(name))
-                .distinct()
-                .toList();
-        if (!notCached.isEmpty()) {
-            List<double[]> embeddings = embeddingModelService.embedBatch(notCached);
-            if (embeddings == null || embeddings.size() != notCached.size()) {
-                throw new IllegalStateException(
-                        "Số lượng embedding trả về không khớp số lượng NER");
-            }
-            for (int i = 0; i < notCached.size(); i++) {
-                embeddingModelService.getEmbeddingCache().put(notCached.get(i), embeddings.get(i));
-            }
-        }
-        return nerNames.stream()
-                .map(embeddingModelService.getEmbeddingCache()::get)
-                .toList();
-    }
-
     // Tính trung bình các embedding NER sau khi chuẩn hóa từng vector.
     public double[] averageNerEmbeddings(List<String> nerNames) {
         List<String> names = nerNames.stream()
@@ -52,7 +31,7 @@ public class NerEmbeddingService {
         if (names.isEmpty()) {
             return null;
         }
-        List<double[]> embeddings = embedWithCache(names);
+        List<double[]> embeddings = embeddingModelService.embedCoCache(names);
 
         double[] average = new double[768];
         for (int j = 0; j < embeddings.size(); j++) {

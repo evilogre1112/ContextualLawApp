@@ -16,6 +16,8 @@ import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.DTO.ThanhPhanFullResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
+import com.example.Simple_logic.Extension.Ppath;
+import com.example.Simple_logic.Extension.Rranking;
 import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 
@@ -47,19 +49,15 @@ public class ThanhPhanSearchResultService {
             int index = ranking.get(j);
             ThanhPhan candidate = context.candidates().get(index);
             Point scores = scoringResult.points().get(index);
-
-            Double scoreParent = scores.x();
-            Double scoreThis = scores.y();
-            Double scoreChild = scores.z();
             ThanhPhan parent = scoringResult.parents().get(candidate.getId());
-            ThanhPhan chosen = null;
-            if ((scoreParent == null || scoreThis >= scoreParent) && (scoreChild == null || scoreThis >= scoreChild)) {
-                chosen = ("Điểm".equals(candidate.getLoaithanhphan()) && parent != null) ? parent: candidate;
-            } else if (scoreParent != null && (scoreChild == null || scoreParent >= scoreChild)) {
-                chosen = parent;
-            } else if (scoreChild != null) {
-                chosen = candidate;
-            }
+            ThanhPhan chosen = switch (Rranking.chooseBranch(scores)) {
+                case THIS -> ("Điểm".equals(candidate.getLoaithanhphan()) && parent != null)
+                        ? parent
+                        : candidate;
+                case PARENT -> parent;
+                case CHILD -> candidate;
+                case NONE -> null;
+            };
             if (chosen != null && !"Chương".equals(chosen.getLoaithanhphan()) && !"Mục".equals(chosen.getLoaithanhphan())) {
                 selected.putIfAbsent(chosen.getId(), chosen);
             }
@@ -69,9 +67,9 @@ public class ThanhPhanSearchResultService {
         }
         Set<String> vanBanIds = new HashSet<>();
         for (String tpId : selected.keySet()) {
-            int slash = tpId.indexOf('/');
-            if (slash > 0) {
-                vanBanIds.add(tpId.substring(0, slash));
+            String vanBanId = Ppath.extractVanBanId(tpId);
+            if (vanBanId != null) {
+                vanBanIds.add(vanBanId);
             }
         }
         Map<String, VanBan> vanBanById = new HashMap<>();
@@ -85,9 +83,9 @@ public class ThanhPhanSearchResultService {
         List<ThanhPhanFullResponse> fullResults = new ArrayList<>(selected.size());
         for (ThanhPhan tp : selected.values()) {
             String tpId = tp.getId();
-            int slash = tpId.indexOf('/');
-            VanBan vanBan = slash > 0 ? vanBanById.get(tpId.substring(0, slash)) : null;
-            List<String> parentIds = extractParentIdsFromRoot(tpId);
+            String vanBanId = Ppath.extractVanBanId(tpId);
+            VanBan vanBan = vanBanId != null ? vanBanById.get(vanBanId) : null;
+            List<String> parentIds = Ppath.extractParentIdsFromRoot(tpId);
             List<ThanhPhan> parents = parentIds.isEmpty()
                     ? List.of()
                     : cayThanhPhanCache.getThanhPhanByIds(parentIds);
@@ -102,22 +100,5 @@ public class ThanhPhanSearchResultService {
                     thanhPhanMapper.toResponses(children)));
         }
         return fullResults;
-    }
-
-    /** Tách chuỗi id cha theo thứ tự từ cấp cao nhất xuống cha gần nhất. */
-    private List<String> extractParentIdsFromRoot(String id) {
-        List<String> reversed = new ArrayList<>();
-        String cur = id;
-        while (cur.contains("/")) {
-            cur = cur.substring(0, cur.lastIndexOf('/'));
-            if (cur.contains("/")) { // Bỏ id gốc của VanBan
-                reversed.add(cur);
-            }
-        }
-        List<String> ordered = new ArrayList<>(reversed.size());
-        for (int i = reversed.size() - 1; i >= 0; i--) {
-            ordered.add(reversed.get(i));
-        }
-        return ordered;
     }
 }

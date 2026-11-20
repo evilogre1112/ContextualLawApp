@@ -16,6 +16,7 @@ import com.example.Simple_logic.DTO.ThanhPhanFullResponse;
 import com.example.Simple_logic.DTO.ThanhPhanResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
+import com.example.Simple_logic.Extension.Ppath;
 import com.example.Simple_logic.Mapper.ThanhPhanMapper;
 
 @Service
@@ -43,46 +44,36 @@ public class GetThanhPhanService {
 
     // Tải chuỗi thành phần cha từ ID phân cấp và trả về theo thứ tự từ gốc đến gần nhất.
     public EntityParentsResponse getEntityParents(String id) {
-        List<String> parentIds = new ArrayList<>();
-
-        String parentId = id;
-
-        while (parentId.contains("/")) {
-            parentId = parentId.substring(0, parentId.lastIndexOf("/"));
-            parentIds.add(parentId);
+        String vanBanId = Ppath.extractVanBanId(id);
+        if (vanBanId == null) {
+            throw new ResponseStatusException(
+                    HttpStatus.BAD_REQUEST,
+                    "ID không hợp lệ hoặc không có thành phần cha");
         }
+        List<String> parentIds = Ppath.extractParentIdsFromRoot(id);
 
-        if (parentIds.isEmpty()) {
-                                    throw new ResponseStatusException(
-                                        HttpStatus.BAD_REQUEST,
-                                        "ID không hợp lệ hoặc không có thành phần cha"
-                                    );
-                                }
-        String vanBanId = parentIds.remove(parentIds.size() - 1);
-        
         VanBan vanBan = vanBanRepo.findById(vanBanId)
-                                    .orElseThrow(() -> new ResponseStatusException(
-                                        HttpStatus.NOT_FOUND,
-                                        "Không tìm thấy văn bản tương ứng"
-                                    ));
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Không tìm thấy văn bản tương ứng"));
+
         Map<String, ThanhPhan> thanhPhanMap = new HashMap<>();
-        for (ThanhPhan thanhPhan : thanhPhanRepo.findAllById(parentIds)) {
-            thanhPhanMap.put(thanhPhan.getId(), thanhPhan);
+        if (!parentIds.isEmpty()) {
+            for (ThanhPhan thanhPhan : thanhPhanRepo.findAllById(parentIds)) {
+                thanhPhanMap.put(thanhPhan.getId(), thanhPhan);
+            }
         }
-        List<ThanhPhan> parentEntities = new ArrayList<>();
 
-        for (int i = parentIds.size() - 1; i >= 0; i--) {
-            ThanhPhan tp = thanhPhanMap.get(parentIds.get(i));
-
+        List<ThanhPhan> parentEntities = new ArrayList<>(parentIds.size());
+        for (String pId : parentIds) {
+            ThanhPhan tp = thanhPhanMap.get(pId);
             if (tp == null) {
                 throw new ResponseStatusException(
-                    HttpStatus.NOT_FOUND,
-                    "Không tìm thấy thành phần cha: " + parentIds.get(i)
-                );
+                        HttpStatus.NOT_FOUND,
+                        "Không tìm thấy thành phần cha: " + pId);
             }
-
             parentEntities.add(tp);
-        }                                                            
+        }
 
         return thanhPhanMapper.toParentsResponse(vanBan, parentEntities);
     }

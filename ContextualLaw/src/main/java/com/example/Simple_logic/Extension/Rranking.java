@@ -86,6 +86,33 @@ public class Rranking {
         return Math.cbrt(t0 + 3.0 * g) / NORM_3;
     }
 
+    public enum BranchTarget {
+        THIS, PARENT, CHILD, NONE
+    }
+
+    /** Xác định nhánh đại diện có điểm cao nhất trong một Point (cha, nó, con). */
+    public static BranchTarget chooseBranch(Point p) {
+        if (p == null) {
+            return BranchTarget.NONE;
+        }
+        Double scoreParent = p.x();
+        Double scoreThis = p.y();
+        Double scoreChild = p.z();
+
+        if (scoreThis != null
+                && (scoreParent == null || scoreThis >= scoreParent)
+                && (scoreChild == null || scoreThis >= scoreChild)) {
+            return BranchTarget.THIS;
+        }
+        if (scoreParent != null && (scoreChild == null || scoreParent >= scoreChild)) {
+            return BranchTarget.PARENT;
+        }
+        if (scoreChild != null) {
+            return BranchTarget.CHILD;
+        }
+        return BranchTarget.NONE;
+    }
+
     public static double[] score3D(List<Point> listRelevant) {
     if (listRelevant == null || listRelevant.isEmpty()) {
         return new double[0];

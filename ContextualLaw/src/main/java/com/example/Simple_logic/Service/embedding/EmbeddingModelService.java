@@ -66,15 +66,18 @@ public class EmbeddingModelService {
         return result;
     }
 
-    // Chỉ tạo embedding còn thiếu trong cache rồi trả về theo thứ tự văn bản đầu vào.
+    // Chỉ tạo embedding còn thiếu trong cache rồi trả về theo đúng thứ tự văn bản đầu vào.
     public List<double[]> embedCoCache(List<String> texts) {
+        if (texts == null || texts.isEmpty()) {
+            return List.of();
+        }
 
         List<String> ds = texts.stream()
                 .filter(s -> s != null && !s.isBlank())
-                .distinct()
                 .toList();
 
         List<String> chuaCoCache = ds.stream()
+                .distinct()
                 .filter(s -> !embeddingCache.containsKey(s))
                 .toList();
 

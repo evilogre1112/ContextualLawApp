@@ -39,21 +39,6 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
                 SearchConfig.DEFAULT_VECTOR_SIMILARITY_THRESHOLD);
     }
 
-    /** Tìm thành phần theo độ tương đồng embedding gốc và sắp xếp theo điểm giảm dần. */
-    @Query("""
-                CALL db.index.vector.queryNodes(
-                    'thanh_phan_embedding_goc', $soUngVien, $embedding
-                )
-                YIELD node, score
-                WHERE score >= $nguong
-                RETURN node
-                ORDER BY score DESC
-            """)
-    List<ThanhPhan> findEmbeddingGoc(
-            @Param("embedding") double[] embedding,
-            @Param("soUngVien") int soUngVien,
-            @Param("nguong") double nguong);
-
     /** Tìm mã thành phần theo độ tương đồng embedding gốc và sắp xếp theo điểm giảm dần. */
     @Query("""
                 CALL db.index.vector.queryNodes(
@@ -65,14 +50,6 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
                 ORDER BY score DESC
             """)
     List<String> findCandidateIdsByEmbeddingGoc(@Param("embedding") double[] embedding,@Param("soUngVien") int soUngVien,@Param("nguong") double nguong);
-
-    /** Tìm theo embedding gốc với ngưỡng tương đồng mặc định của hệ thống. */
-    default List<ThanhPhan> findEmbeddingGoc(double[] embedding, int soUngVien) {
-        return findEmbeddingGoc(
-                embedding,
-                soUngVien,
-                SearchConfig.DEFAULT_VECTOR_SIMILARITY_THRESHOLD);
-    }
 
     // Lấy các cặp thành phần cha-con từ những quan hệ phân cấp được hỗ trợ.
     @Query("""
