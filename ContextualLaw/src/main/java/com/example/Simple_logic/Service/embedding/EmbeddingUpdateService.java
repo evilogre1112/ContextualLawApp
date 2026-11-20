@@ -1,5 +1,6 @@
 package com.example.Simple_logic.Service.embedding;
 
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service;
 import com.example.Simple_logic.Config.EmbeddingConfig;
 import com.example.Simple_logic.DAO.ThanhPhanRepo;
 import com.example.Simple_logic.Entity.ThanhPhan;
+import com.example.Simple_logic.Extension.Normalize;
 import com.example.Simple_logic.Extension.Vvec;
 import com.example.Simple_logic.Service.thanhphan.CayThanhPhanCache;
 import com.example.Simple_logic.Service.ner.NERService;
@@ -19,6 +21,7 @@ import com.example.Simple_logic.Service.ner.NerEmbeddingService;
 @Service 
 public class EmbeddingUpdateService {
 
+    private final EmbeddingModelService embeddingModelService;
     private  final CayThanhPhanCache cayThanhPhanCache;
     private final ThanhPhanRepo thanhPhanRepo ;
     private final NERService nerService;
@@ -30,12 +33,14 @@ public class EmbeddingUpdateService {
         ThanhPhanRepo thanhPhanRepo,
         NERService nerService,
         NerEmbeddingService nerEmbeddingService,
-        ThanhPhanVectorService thanhPhanVectorService) {
+        ThanhPhanVectorService thanhPhanVectorService, 
+        EmbeddingModelService embeddingModelService) {
         this.cayThanhPhanCache = cayThanhPhanCache;
         this.thanhPhanRepo = thanhPhanRepo;
         this.nerService = nerService;
         this.nerEmbeddingService = nerEmbeddingService;
         this.thanhPhanVectorService = thanhPhanVectorService;
+        this.embeddingModelService = embeddingModelService;
     }
 
     private final Map<String, double[]> embeddingTam = new HashMap<>();
@@ -54,6 +59,45 @@ public class EmbeddingUpdateService {
 
     public boolean getTinhLaiTatCa() { return tinhLaiTatCa; }
     public void setTinhLaiTatCa(boolean v) { this.tinhLaiTatCa = v; }
+
+    public void reEmbed(){
+        List<ThanhPhan> dsTp = thanhPhanRepo.getThanhPhanCoEmb();
+        List<ThanhPhan> validTps = new ArrayList<>();
+        List<String> texts = new ArrayList<>();
+       
+        for (ThanhPhan tp : dsTp){
+            String norm = Normalize.chuanHoa(tp.getNoiDung());
+            if (!norm.isBlank()) {
+                validTps.add(tp);
+                texts.add(norm);
+            }
+        }
+        int batchSize = 64;
+        List<Map<String, Object>> rows = new ArrayList<>(dsTp.size());
+
+        for (int i = 0; i < texts.size(); i += batchSize) {
+            // Lấy 1 lô text trong texts theo bactchSize sao cho không bị lố số lượng text hiện tại
+            int end = Math.min(i + batchSize, texts.size());
+            List<double[]> embs = embeddingModelService.embedBatch(texts.subList(i, end));
+            for (int j = 0; j < embs.size(); j++) {
+                rows.add(Map.of(
+                        "id", validTps.get(i + j).getId(),
+                        "EmbeddingGoc", embs.get(j))
+                    );
+            }
+        }
+
+        if (!rows.isEmpty()) {
+            thanhPhanRepo.updateAll(rows);
+        }
+        boolean old = getTinhLaiTatCa();
+        setTinhLaiTatCa(true);
+        try {
+            capNhatEmbedding();
+        } finally {
+            setTinhLaiTatCa(old);
+        }
+    }
 
     // Chạy lần lượt các bước trộn embedding và lưu kết quả cuối cùng.
     public synchronized void capNhatEmbedding() {
@@ -182,7 +226,7 @@ public class EmbeddingUpdateService {
 
                 rows.add(Map.of(
                         "id", entry.getKey(),
-                        "emb", embeddingFinal));
+                        "Embedding", embeddingFinal));
 
             } catch (Exception e) {
                 System.err.println(

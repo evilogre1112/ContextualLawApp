@@ -66,8 +66,23 @@ public class ArticleComponentApi {
             );
 
         } catch (RuntimeException e) {
-            return ResponseEntity.internalServerError()
-                .body(Map.of("error", e.getMessage()));
+            return ResponseEntity
+                                .internalServerError()
+                                .body(Map.of("error", e.getMessage()));
+        }
+    }
+
+    @PostMapping("/re-embed")
+    public ResponseEntity<?> reEmbed(){
+        try {
+            embeddingUpdateService.reEmbed();
+            return ResponseEntity.ok(
+                Map.of("Message","Tạo lại embedding thành công")
+            );
+        }catch (RuntimeException e){
+            return  ResponseEntity
+                                    .internalServerError()
+                                    .body(Map.of("error",e.getMessage()));
         }
     }
 
