@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 import com.example.Simple_logic.DTO.Point;
 import com.example.Simple_logic.DTO.ThanhPhanFullResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
+import com.example.Simple_logic.Extension.Rranking;
 
 @Service
 public class ThanhPhanSearchService {
@@ -59,25 +60,23 @@ public class ThanhPhanSearchService {
         }
         for (int i = 0; i < candidates.size(); i++) {
             ThanhPhan candidate = candidates.get(i);
-            Point p = points.get(i);
-            Double scoreParent = p.x();
-            Double scoreThis = p.y();
-            Double scoreChild = p.z();
-            if ((scoreParent == null || scoreThis >= scoreParent)
-                    && (scoreChild == null || scoreThis >= scoreChild)) {
-                scores[i] = bm25Service.score(qTokens, candidate.getId());
-            } else if (scoreParent != null && (scoreChild == null || scoreParent >= scoreChild)) {
-                ThanhPhan parent = scoringResult.parents().get(candidate.getId());
-                scores[i] = parent != null ? bm25Service.score(qTokens, parent.getId()) : 0.0;
-            } else if (scoreChild != null) {
-                List<String> childIds = context.descendants().get(candidate.getId());
-                if (childIds != null) {
-                    double maxChild = 0.0;
-                    for (String childId : childIds) {
-                        maxChild = Math.max(maxChild, bm25Service.score(qTokens, childId));
-                    }
-                    scores[i] = maxChild;
+            switch (Rranking.chooseBranch(points.get(i))) {
+                case THIS -> scores[i] = bm25Service.score(qTokens, candidate.getId());
+                case PARENT -> {
+                    ThanhPhan parent = scoringResult.parents().get(candidate.getId());
+                    scores[i] = parent != null ? bm25Service.score(qTokens, parent.getId()) : 0.0;
                 }
+                case CHILD -> {
+                    List<String> childIds = context.descendants().get(candidate.getId());
+                    if (childIds != null) {
+                        double maxChild = 0.0;
+                        for (String childId : childIds) {
+                            maxChild = Math.max(maxChild, bm25Service.score(qTokens, childId));
+                        }
+                        scores[i] = maxChild;
+                    }
+                }
+                case NONE -> scores[i] = 0.0;
             }
         }
         return scores;
