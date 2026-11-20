@@ -102,8 +102,7 @@ public class ArticleComponentApi {
     }
 
     @GetMapping("/getFull")
-    public ResponseEntity<ThanhPhanFullResponse> getEntityFull(
-            @RequestParam String id) {
+    public ResponseEntity<ThanhPhanFullResponse> getEntityFull(@RequestParam String id) {
 
         return ResponseEntity.ok(
             getThanhPhanService.getEntityFull(id)

@@ -18,7 +18,6 @@ import com.example.Simple_logic.Entity.Diem;
 import com.example.Simple_logic.Entity.Dieu;
 import com.example.Simple_logic.Entity.Khoan;
 import com.example.Simple_logic.Entity.Muc;
-import com.example.Simple_logic.Entity.NER;
 import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Entity.VanBan;
 import com.example.Simple_logic.Extension.Normalize;
@@ -60,11 +59,6 @@ public class ThanhPhanCreationService {
         tp.setId(id);
         thanhPhanMapper.updateFromResponse(response, tp);
         tp.setVanBan(vanBan);
-
-        tp.setEmbedding(embeddingModelService.embed(Normalize.chuanHoa(tp.getNoiDung())));
-
-        List<NER> ner = nerService.saveNer(tp.getNoiDung());
-        tp.setNers(ner);
     }
 
     // Phân tích văn bản thành cấu trúc thành phần phân cấp rồi lưu vào kho dữ liệu.
@@ -206,12 +200,35 @@ public class ThanhPhanCreationService {
 
         start = System.nanoTime();
 
+        ganEmbeddingTheoLo(all);
+        nerService.ganNerTheoLo(all);
+
         thanhPhanRepo.saveAll(all);
         searchIndexSyncService.reloadAll();
 
         Ttime.logTime("Lưu thành phần", start);
 
         return all.size();
+    }
+
+    private void ganEmbeddingTheoLo(List<ThanhPhan> all){
+        List<ThanhPhan> validTps = new ArrayList<>();
+        List<String> texts = new ArrayList<>();
+        for (ThanhPhan tp : all){
+            String norm = Normalize.chuanHoa(tp.getNoiDung());
+            if(!norm.isBlank()){
+                validTps.add(tp);
+                texts.add(norm);
+            }
+        }
+        int batchSize = 64 ;
+        for (int i = 0 ; i < texts.size() ; i+= batchSize){
+            int end = Math.min(i+batchSize, texts.size());
+            List<double[]> embs = embeddingModelService.embedBatch(texts.subList(i, end));
+            for (int j = 0; j < embs.size(); j++) {
+                validTps.get(i + j).setEmbedding(embs.get(j));
+            }
+        }
     }
 
 }

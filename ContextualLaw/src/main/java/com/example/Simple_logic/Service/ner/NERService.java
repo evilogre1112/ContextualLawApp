@@ -15,6 +15,7 @@ import com.example.Simple_logic.DTO.NEREntityResponse;
 import com.example.Simple_logic.DTO.NERResponse;
 import com.example.Simple_logic.DTO.QuanHe;
 import com.example.Simple_logic.Entity.NER;
+import com.example.Simple_logic.Entity.ThanhPhan;
 import com.example.Simple_logic.Extension.*;
 import com.example.Simple_logic.Mapper.NERMapper;
 
@@ -87,6 +88,72 @@ public class NERService {
         }
 
         return ketQua;
+    }
+
+    @Transactional
+    public void ganNerTheoLo(List<ThanhPhan> all) {
+        if (all == null || all.isEmpty()) {
+            return;
+        }
+
+
+        Map<String, NER> nerCache = new HashMap<>();
+        for (NER existing : nerRepo.findAll()) {
+            if (existing.getTenNER() != null && existing.getLoaiNER() != null) {
+                nerCache.put(existing.getTenNER().trim() + "|" + existing.getLoaiNER().trim(), existing);
+            }
+        }
+
+        List<NER> newNers = new ArrayList<>();
+        int batchSize = 64;
+
+        for (int i = 0; i < all.size(); i += batchSize) {
+            int end = Math.min(i + batchSize, all.size());
+            List<ThanhPhan> sub = all.subList(i, end);
+            List<String> texts = sub.stream()
+                    .map(tp -> tp.getNoiDung() == null ? "" : tp.getNoiDung())
+                    .toList();
+
+            List<NERResponse> responses = client.post()
+                    .uri("http://127.0.0.1:8000/extract-entities/batch")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(Map.of("texts", texts))
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<List<NERResponse>>() {});
+
+            if (responses == null || responses.size() != sub.size()) {
+                continue;
+            }
+
+            for (int j = 0; j < sub.size(); j++) {
+                NERResponse res = responses.get(j);
+                List<NER> tpNers = new ArrayList<>();
+                if (res != null && res.entities() != null) {
+                    for (NEREntityResponse item : res.entities()) {
+                        String name = Normalize.chuanHoa(item.text());
+                        String label = item.label() == null ? "" : item.label().trim();
+                        if (name.isBlank() || label.isBlank()) {
+                            continue;
+                        }
+                        String key = name + "|" + label;
+                        NER ner = nerCache.get(key);
+                        if (ner == null) {
+                            ner = nerMapper.toEntity(item, name);
+                            ner.setTenNER(name);
+                            ner.setLoaiNER(label);
+                            nerCache.put(key, ner);
+                            newNers.add(ner);
+                        }
+                        tpNers.add(ner);
+                    }
+                }
+                sub.get(j).setNers(tpNers);
+            }
+        }
+
+        if (!newNers.isEmpty()) {
+            nerRepo.saveAll(newNers);
+        }
     }
 
     public List<NER> getNER(String id){
