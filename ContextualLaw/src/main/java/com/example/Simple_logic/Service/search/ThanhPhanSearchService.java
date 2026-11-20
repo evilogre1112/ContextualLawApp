@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 
 import com.example.Simple_logic.DTO.Point;
-import com.example.Simple_logic.DTO.ThanhPhanResponse;
+import com.example.Simple_logic.DTO.ThanhPhanFullResponse;
 import com.example.Simple_logic.Entity.ThanhPhan;
 
 @Service
@@ -34,7 +34,7 @@ public class ThanhPhanSearchService {
     }
 
     // Điều phối tạo embedding, tìm ứng viên, chấm điểm, xếp hạng và dựng kết quả.
-    public List<ThanhPhanResponse> search(String query, int k) {
+    public List<ThanhPhanFullResponse> search(String query, int k) {
         double[] embeddingTimKiem = queryEmbeddingService.createSearchEmbedding(query);
         ThanhPhanCandidateSearchService.SearchContext context = candidateSearchService.findCandidates(embeddingTimKiem, k);
         ThanhPhanSearchScoringService.ScoringResult scoringResult = searchScoringService.score(context, embeddingTimKiem);

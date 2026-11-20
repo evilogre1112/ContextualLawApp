@@ -138,7 +138,7 @@ public interface ThanhPhanRepo extends Neo4jRepository<ThanhPhan, String> {
     List<ThanhPhan> getChild(String id);
 
     // Lấy các thành phần đã có embedding nhưng chưa có embedding gốc.
-    @Query("MATCH (t:ThanhPhan) WHERE t.embedding IS NOT NULL AND t.embeddingGoc IS NULL RETURN t")
+    @Query("MATCH (t:`Thành phần`) WHERE t.Embedding IS NOT NULL AND t.EmbeddingGoc IS NULL RETURN t")
     List<ThanhPhan> getThanhPhanChuaCoEmbGoc();
 
     @Query("""

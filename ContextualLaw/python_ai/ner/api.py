@@ -276,3 +276,16 @@ def embed_batch(request: BatchEmbeddingRequest):
             status_code=500,
             detail=f"Không thể tạo batch embedding: {str(e)}"
         )
+@router.post("/extract-entities/batch")
+def extract_entities_batch(request: BatchEmbeddingRequest):
+    if not request.texts:
+        return []
+    try:
+        predictor = get_predictor()
+        return [
+            predictor.predict(t) if (t and t.strip()) else {"entities": []}
+            for t in request.texts
+        ]
+    except NerSetupError as exc:
+        logger.exception("Không thể khởi tạo native NER predictor")
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
